@@ -223,25 +223,25 @@ body{background:#F3F1EA}
 /* Executive View: labels in dark / black for readability */
 .ex-cost span,.ex-kpi .lbl,.ex-sc .lbl,.ex-sc-head .legendrow,.ex-sub,.ex-empty,.ex-num small,.ex-cost b small{color:#1A1A1A!important}
 .ex-plot svg text:not(.sc-val){fill:#1A1A1A}
-.ex-costs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:0 0 auto}
+.ex-costs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:0 0 auto}
 .ex-cost{display:flex;align-items:baseline;justify-content:space-between;gap:8px;border:1px solid var(--line-soft);border-radius:8px;background:#FCFBF7;padding:6px 12px;min-width:0}
 .ex-cost span{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
 .ex-cost b{font-family:var(--disp);font-size:18px;font-weight:700;color:var(--teal-deep);white-space:nowrap}
 .ex-cost b small{font-family:inherit;font-size:11.5px;font-weight:600;color:var(--muted)}
 .ex-cost b.muted{color:#C9C3B5}
 @media(max-width:1500px){.ex-cost{flex-direction:column;align-items:flex-start;gap:0;padding:4px 10px}.ex-cost b{font-size:16px}}
-@media(max-width:620px){.ex-costs{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.ex-costs{grid-template-columns:1fr}}
 @media(min-width:1001px) and (max-height:800px){
-  .ex-cost{flex-direction:row;align-items:baseline;gap:4px;padding:3px 8px}
-  .ex-cost span{font-size:10.5px}
-  .ex-cost b{font-size:13px}
+  .ex-cost{flex-direction:row;align-items:baseline;gap:6px;padding:3px 10px}
+  .ex-cost span{font-size:11px}
+  .ex-cost b{font-size:14px}
   .ex-cost b small{display:none}
-  .ex-costs{gap:6px;grid-template-columns:1.2fr 1fr 1fr 1fr}
+  .ex-costs{gap:6px}
 }
 .ex-lblrow{display:flex;align-items:center;gap:8px}
 .ex-numrow{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:8px}
-.ex-plan{display:inline-flex;align-items:center;gap:4px;font-size:16px;font-weight:700;color:#8A6A14;white-space:nowrap}
-.ex-plan i{width:3px;height:14px;border-radius:2px;background:var(--gold);display:inline-block;align-self:center}
+.ex-plan{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:#8A6A14;white-space:nowrap}
+.ex-plan i{width:3px;height:11px;border-radius:2px;background:var(--gold);display:inline-block;align-self:center}
 .ex-sc-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .ex-sc-head .legendrow{margin:0;font-size:11.5px}
 #view-exec .eyebrow{display:none}
@@ -339,42 +339,6 @@ body.ex-fs-on{overflow:hidden}
 .ex-kpis{display:grid;grid-template-rows:repeat(3,1fr);gap:8px;min-height:0}
 .ex-kpi{border:1px solid var(--line-soft);border-radius:8px;padding:8px 12px;background:#FCFBF7;display:flex;flex-direction:column;justify-content:center;min-height:0}
 .ex-kpi .lbl{font-size:12px;color:var(--muted);font-weight:600}
-.ex-kpi.ex-split{flex-direction:row;align-items:stretch;padding:0}
-.ex-split .ex-half{flex:1 1 0;min-width:0;padding:8px 12px;display:flex;flex-direction:column;justify-content:center}
-.ex-split .ex-half+.ex-half{border-left:1px solid var(--line-soft)}
-.ex-split .ex-half>*{flex-shrink:0}
-.ex-split .ex-half[data-kpi]{cursor:pointer;transition:background .15s}
-.ex-split .ex-half[data-kpi]:hover{background:#F3EFE4}
-.ex-split .ex-half[data-kpi]:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
-/* SPI / CPI detail card */
-.kd-back{position:fixed;inset:0;background:rgba(20,32,33,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
-.kd-card{background:#fff;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.25);width:min(520px,100%);max-height:92vh;overflow:auto;padding:20px 22px;color:#1A1A1A}
-.kd-top{display:flex;align-items:flex-start;gap:10px}
-.kd-top h3{margin:0;font-size:17px;color:var(--teal-deep)}
-.kd-top .kd-proj{font-size:12px;color:var(--muted);margin-top:2px}
-.kd-x{margin-left:auto;border:0;background:#F1EEE6;border-radius:8px;width:30px;height:30px;font-size:18px;line-height:1;cursor:pointer;color:#333}
-.kd-hero{display:flex;align-items:center;gap:14px;margin:16px 0 6px}
-.kd-val{font-family:var(--disp);font-size:44px;font-weight:700;line-height:1}
-.kd-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-weight:700;font-size:14px}
-.kd-say{font-size:15px;line-height:1.5;margin:10px 0 14px}
-.kd-figs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.kd-fig{border:1px solid var(--line-soft);border-radius:8px;padding:8px 10px;background:#FCFBF7}
-.kd-fig span{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
-.kd-fig b{font-size:15px}
-.kd-fig b em{font-style:normal}
-.kd-scale{width:100%;border-collapse:collapse;font-size:13px}
-.kd-scale td{padding:6px 8px;border-bottom:1px solid var(--line-soft)}
-.kd-scale tr.on td{background:#F3EFE4;font-weight:700}
-.kd-scale i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
-.kd-note{font-size:13px;line-height:1.45;background:#FFF7E3;border-left:3px solid var(--gold);padding:8px 10px;border-radius:6px;margin:0 0 14px}
-.kd-foot{font-size:11.5px;color:var(--muted);margin-top:10px}
-.ex-lab{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 12px;font-size:12px;line-height:1.3}
-.ex-lab::before{content:'';width:14px;height:14px;border-radius:4px;border:2px solid currentColor;box-sizing:border-box}
-.ex-lab[aria-pressed="true"]{background:var(--teal-deep);color:#fff}
-.ex-lab[aria-pressed="true"]::before{background:var(--gold);border-color:var(--gold)}
-.ex-lab::after{content:'\1F512';font-size:11px;margin-left:2px}
-.ex-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;position:relative;top:-1px}
-.ex-split .ex-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;letter-spacing:-.1px}
 .ex-num{font-family:var(--disp);font-size:clamp(26px,3.6vh,38px);font-weight:700;line-height:1.05;color:var(--teal-deep)}
 .ex-num small{font-size:15px;font-weight:600;color:var(--muted);margin-left:3px}
 .ex-num.good{color:var(--good)}.ex-num.warn{color:#B8861B}.ex-num.bad{color:var(--bad)}.ex-num.muted{color:#C9C3B5}
@@ -402,10 +366,9 @@ body.ex-fs-on{overflow:hidden}
 }
 @media(min-width:1001px) and (max-height:800px){
   .ex-kpi{padding:4px 10px;overflow:hidden}
-  .ex-kpi.ex-split{padding:0}.ex-split .ex-half{padding:4px 10px}
   .ex-kpi .ex-sub{display:none}
   .ex-num{font-size:22px}.ex-num small{font-size:12px}
-  .ex-plan{font-size:14px}
+  .ex-plan{font-size:11px}
   .ex-kpi .lbl{font-size:11px}
   .ex-head h2{font-size:17px}
   .excard{padding:10px 12px;gap:6px}
@@ -595,7 +558,6 @@ body.ex-fs-on{overflow:hidden}
         <h2>Executive View</h2>
         <p class="lead">Progress, schedule performance, delay and S-curve for every project at a glance</p>
       </div>
-      <button class="btn ghost ex-lab" id="ex-lab" type="button" aria-pressed="false" title="Cost boxes leave out Plumbing and Finishing labour. Press to add it in.">Add excluded labour cost</button>
     </div>
     <div class="exec-grid" id="exec-grid"></div>
   </section>
@@ -1325,45 +1287,35 @@ function renderExec(list){
   host.innerHTML=list.map(it=>{
     const has=!!it.data;
     const pill=!has ? ['off','Not connected'] : it.cls==='ok' ? ['ok','Live'] : it.builtin && !it.live ? ['warn','Built-in data'] : ['warn','Partly live'];
-    let prog='', spi='', cpi='', delay='', plTxt='';
+    let prog='', spi='', delay='', plTxt='';
     if(has){
       const t=execTotals(it.data);
-      const pl=t.bcost? t.pcost/t.bcost*100:0, ac=t.bcost? t.ecost/t.bcost*100:0, sp=t.pcost? t.ecost/t.pcost:0, cp=t.acost? t.ecost/t.acost:0;
-      (window.__exMet=window.__exMet||{})[it.pid]={name:it.name,sp:sp,cp:cp,t:t,dates:it.data.dates||null};
+      const pl=t.bcost? t.pcost/t.bcost*100:0, ac=t.bcost? t.ecost/t.bcost*100:0, sp=t.pcost? t.ecost/t.pcost:0;
       plTxt=pl.toFixed(2)+'%';
       prog='<div class="ex-numrow"><span class="ex-num">'+ac.toFixed(2)+'%</span><span class="ex-plan"><i></i>Planned '+plTxt+'</span></div>'
         +'<div class="ex-bar" title="Earned '+ac.toFixed(2)+'% vs planned '+pl.toFixed(2)+'%"><i style="width:'+Math.min(ac,100)+'%"></i><b style="left:calc('+Math.min(pl,100)+'% - 1px)"></b></div>'
         ;
       spi='<div class="ex-num '+(sp>=1?'good':sp>=0.9?'warn':'bad')+'">'+sp.toFixed(2)+'</div>'
-        +'<div class="ex-sub">'+(sp>=1?'On schedule':((1-sp)*100).toFixed(0)+'% behind')+'</div>';
-      const cs = cp>1.10 ? ['#B8861B','Check costs','CPI above 1.10: spending looks very low. Check that all bills and material costs are booked.']
-               : cp>=1   ? ['#2E8B57','Good spending','CPI 1.00\u20131.10: every Rs 1 spent is earning Rs '+cp.toFixed(2)+' of work. Spending is under control.']
-               : cp>=0.95? ['#B8861B','Slightly over','CPI 0.95\u20130.99: slightly over budget. Keep an eye on it.']
-               : cp>=0.90? ['#D2691E','Over budget','CPI 0.90\u20130.95: over budget. Check rates, wastage, rework and labour output.']
-               :           ['#C0392B','Overspending','CPI below 0.90: serious overspending. Corrective action needed.'];
-      cpi=t.acost ? '<div class="ex-num '+(cp>=1?'good':cp>=0.9?'warn':'bad')+'">'+cp.toFixed(2)+'</div>'
-        +'<div class="ex-sub"><i class="ex-dot" style="background:'+cs[0]+'"></i>'+cs[1]+'</div>'
-        : '<div class="ex-num muted">\u2014</div><div class="ex-sub">No actual cost yet</div>';
+        +'<div class="ex-sub">'+(sp>=1?'On or ahead of schedule':'Behind schedule by '+((1-sp)*100).toFixed(0)+'%')+'</div>';
       const dt=it.data.dates;
       if(dt && dt.plannedEnd && dt.expectedEnd){
         const d=Math.round((new Date(dt.expectedEnd+'T00:00:00')-new Date(dt.plannedEnd+'T00:00:00'))/86400000);
         delay='<div class="ex-num '+(d>0?'bad':'good')+'">'+d+'<small>days</small></div><div class="ex-sub">Expected finish '+fmtDate(dt.expectedEnd)+'</div>';
       } else delay='<div class="ex-num muted">'+dash+'</div><div class="ex-sub">Finish dates not set</div>';
     } else {
-      prog=spi=cpi='<div class="ex-num muted">'+dash+'</div><div class="ex-sub">No data yet</div>';
+      prog=spi='<div class="ex-num muted">'+dash+'</div><div class="ex-sub">No data yet</div>';
       delay='<div class="ex-num muted">'+dash+'</div><div class="ex-sub">No data yet</div>';
     }
     const hasSc = has && it.data.scurve && it.data.scurve.labels && it.data.scurve.labels.length;
     let costs='';
     if(has){
-      const ct=window.__exAllLab ? execTotals(it.data) : execCostTotals(it.data);
+      const ct=execCostTotals(it.data);
       const pc=v=> ct.bcost? ' <small>'+(v/ct.bcost*100).toFixed(1)+'%</small>' : '';
       costs='<div class="ex-cost"><span>Budgeted cost</span><b>'+mRs(ct.bcost)+'</b></div>'
            +'<div class="ex-cost"><span>Planned cost</span><b>'+mRs(ct.pcost)+pc(ct.pcost)+'</b></div>'
-           +'<div class="ex-cost"><span>Earned cost</span><b>'+mRs(ct.ecost)+pc(ct.ecost)+'</b></div>'
-           +'<div class="ex-cost"><span>Actual cost</span><b>'+mRs(ct.acost)+pc(ct.acost)+'</b></div>';
+           +'<div class="ex-cost"><span>Earned cost</span><b>'+mRs(ct.ecost)+pc(ct.ecost)+'</b></div>';
     } else {
-      costs=['Budgeted cost','Planned cost','Earned cost','Actual cost'].map(l=>'<div class="ex-cost"><span>'+l+'</span><b class="muted">'+dash+'</b></div>').join('');
+      costs=['Budgeted cost','Planned cost','Earned cost'].map(l=>'<div class="ex-cost"><span>'+l+'</span><b class="muted">'+dash+'</b></div>').join('');
     }
     const isFs = window.__exFs===it.pid;
     return '<div class="card excard'+(has?'':' is-empty')+(isFs?' fs-card':'')+'">'
@@ -1378,7 +1330,7 @@ function renderExec(list){
       +'<div class="ex-body">'
       +  '<div class="ex-kpis">'
       +    '<div class="ex-kpi"><div class="lbl">Progress %</div>'+prog+'</div>'
-      +    '<div class="ex-kpi ex-split"><div class="ex-half"'+(has?' data-kpi="spi" data-pid="'+it.pid+'" role="button" tabindex="0" title="Click for schedule details"':'')+'><div class="lbl">SPI</div>'+spi+'</div><div class="ex-half"'+(has?' data-kpi="cpi" data-pid="'+it.pid+'" role="button" tabindex="0" title="Click for spending details"':'')+'><div class="lbl">CPI</div>'+cpi+'</div></div>'
+      +    '<div class="ex-kpi"><div class="lbl">SPI</div>'+spi+'</div>'
       +    '<div class="ex-kpi"><div class="lbl">Delay</div>'+delay+'</div>'
       +  '</div>'
       +  '<div class="ex-sc"><div class="ex-sc-head"><span class="lbl">S-curve</span>'
@@ -1402,95 +1354,6 @@ function renderExec(list){
     if(window.__exFs===b.dataset.fs) exExitFs(); else exEnterFs(b.dataset.fs);
   }));
   host.querySelectorAll('[data-sync]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();showView('sync');}));
-  host.querySelectorAll('[data-kpi]').forEach(el=>{
-    const go=()=>kpiDetail(el.dataset.kpi, el.dataset.pid);
-    el.addEventListener('click',go);
-    el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
-  });
-}
-/* Executive View: button that adds the excluded (Plumbing + Finishing) labour into the cost boxes */
-(function(){
-  const b=document.getElementById('ex-lab'); if(!b) return;
-  try{ window.__exAllLab = localStorage.getItem('exAllLab')==='1'; }catch(e){ window.__exAllLab=false; }
-  const paint=()=>{ b.setAttribute('aria-pressed', window.__exAllLab?'true':'false');
-    b.textContent = window.__exAllLab ? 'Excluded labour added' : 'Add excluded labour cost';
-    b.title = window.__exAllLab ? 'Cost boxes now include Plumbing and Finishing labour. Press to remove it again.'
-                                : 'Cost boxes leave out Plumbing and Finishing labour. Press to add it in.'; };
-  paint();
-  const flip=()=>{
-    window.__exAllLab=!window.__exAllLab;
-    try{ localStorage.setItem('exAllLab', window.__exAllLab?'1':'0'); }catch(e){}
-    paint();
-    if(window.__execList) renderExec(window.__execList());
-  };
-  // password protected: asks for the login password every time the button is pressed
-  b.addEventListener('click',()=>scAskPassword(flip,
-    window.__exAllLab ? 'Enter your login password to remove the excluded labour cost from the boxes.'
-                      : 'Enter your login password to add the excluded labour cost to the boxes.'));
-})();
-/* Executive View: SPI / CPI detail card (opens on click) */
-function kpiBand(kind, v){
-  if(kind==='cpi') return v>1.10 ? {c:'#B8861B',t:'Check costs',s:'Spending looks very low. Make sure all bills and material costs are booked.'}
-    : v>=1    ? {c:'#2E8B57',t:'Good spending',s:'Spending is under control. Work is costing less than budgeted.'}
-    : v>=0.95 ? {c:'#B8861B',t:'Slightly over',s:'Slightly over budget. Keep an eye on it.'}
-    : v>=0.90 ? {c:'#D2691E',t:'Over budget',s:'Over budget. Check rates, wastage, rework and labour output.'}
-    :           {c:'#C0392B',t:'Overspending',s:'Serious overspending. Corrective action is needed.'};
-  return v>=1 ? {c:'#2E8B57',t:'On schedule',s:'Work is on or ahead of plan.'}
-    : v>=0.95 ? {c:'#B8861B',t:'Slightly behind',s:'Slightly behind plan. Keep an eye on it.'}
-    : v>=0.90 ? {c:'#D2691E',t:'Behind schedule',s:'Behind plan. Check manpower, material supply and site constraints.'}
-    :           {c:'#C0392B',t:'Seriously behind',s:'Well behind plan. A recovery plan is needed.'};
-}
-function kpiDetail(kind, pid){
-  const m=(window.__exMet||{})[pid]; if(!m) return;
-  const t=m.t, v= kind==='cpi'?m.cp:m.sp, b=kpiBand(kind,v);
-  const rs=x=>(x<0?'\u2212':'')+mRs(Math.abs(x));
-  let title, say, figs, scale, note='';
-  if(kind==='cpi'){
-    title='Spending (CPI)';
-    say='For every <b>Rs 1</b> spent, <b>Rs '+v.toFixed(2)+'</b> worth of work has been done. '+b.s;
-    const cv=t.ecost-t.acost, eac= v? t.bcost/v : 0;
-    figs=[['Earned value (work done)',mRs(t.ecost)],['Actual cost (spent)',mRs(t.acost)],
-          [cv>=0?'Saved so far':'Overspent so far','<em style="color:'+(cv>=0?'#2E8B57':'#C0392B')+'">'+mRs(Math.abs(cv))+'</em>'],
-          ['Forecast final cost', mRs(eac)+' <small style="color:var(--muted)">of '+mRs(t.bcost)+'</small>']];
-    scale=[[1.10,Infinity,'Above 1.10','Check costs','#B8861B'],[1,1.10,'1.00 \u2013 1.10','Good spending','#2E8B57'],
-           [0.95,1,'0.95 \u2013 0.99','Slightly over','#B8861B'],[0.90,0.95,'0.90 \u2013 0.95','Over budget','#D2691E'],[-Infinity,0.90,'Below 0.90','Overspending','#C0392B']];
-    if(v>=1 && m.sp<0.95) note='Spending is low partly because work is behind plan (SPI '+m.sp.toFixed(2)+'). Read CPI together with SPI.';
-  } else {
-    title='Schedule (SPI)';
-    say='For every <b>Rs 1</b> of work planned by now, <b>Rs '+v.toFixed(2)+'</b> has been done'+(v<1?' \u2014 '+((1-v)*100).toFixed(0)+'% behind plan. ':'. ')+b.s;
-    const sv=t.ecost-t.pcost;
-    figs=[['Planned value (should be done)',mRs(t.pcost)],['Earned value (actually done)',mRs(t.ecost)],
-          [sv>=0?'Ahead of plan by':'Behind plan by','<em style="color:'+(sv>=0?'#2E8B57':'#C0392B')+'">'+mRs(Math.abs(sv))+'</em>']];
-    const dt=m.dates;
-    if(dt && dt.plannedEnd && dt.expectedEnd){
-      const d=Math.round((new Date(dt.expectedEnd+'T00:00:00')-new Date(dt.plannedEnd+'T00:00:00'))/86400000);
-      figs.push(['Expected finish', fmtDate(dt.expectedEnd)+' <small style="color:'+(d>0?'#C0392B':'#2E8B57')+'">('+(d>0?d+' days late':'on time')+')</small>']);
-    } else figs.push(['Expected finish','\u2014']);
-    scale=[[1,Infinity,'1.00 or more','On schedule','#2E8B57'],[0.95,1,'0.95 \u2013 0.99','Slightly behind','#B8861B'],
-           [0.90,0.95,'0.90 \u2013 0.95','Behind schedule','#D2691E'],[-Infinity,0.90,'Below 0.90','Seriously behind','#C0392B']];
-    if(v<0.95 && m.cp>=1) note='Cost looks fine (CPI '+m.cp.toFixed(2)+'), but that is partly because less work has been done. Speeding up work is the priority.';
-  }
-  const inBand=r=> kind==='cpi' ? (r[1]===Infinity ? v>r[0] : r[0]===-Infinity ? v<r[1] : (r[0]===1 ? v>=1&&v<=1.10 : v>=r[0]&&v<r[1]))
-                                : (r[1]===Infinity ? v>=r[0] : r[0]===-Infinity ? v<r[1] : v>=r[0]&&v<r[1]);
-  const html='<div class="kd-card" role="dialog" aria-modal="true" aria-labelledby="kd-h">'
-    +'<div class="kd-top"><div><h3 id="kd-h">'+title+'</h3><div class="kd-proj">'+esc(m.name)+'</div></div>'
-    +'<button class="kd-x" type="button" aria-label="Close">\u00d7</button></div>'
-    +'<div class="kd-hero"><span class="kd-val" style="color:'+b.c+'">'+v.toFixed(2)+'</span>'
-    +'<span class="kd-pill" style="background:'+b.c+'1f;color:'+b.c+'"><i class="ex-dot" style="background:'+b.c+'"></i>'+b.t+'</span></div>'
-    +'<p class="kd-say">'+say+'</p>'
-    +(note?'<p class="kd-note">'+note+'</p>':'')
-    +'<div class="kd-figs">'+figs.map(f=>'<div class="kd-fig"><span>'+f[0]+'</span><b>'+f[1]+'</b></div>').join('')+'</div>'
-    +'<table class="kd-scale">'+scale.map(r=>'<tr'+(inBand(r)?' class="on"':'')+'><td>'+r[2]+'</td><td><i style="background:'+r[4]+'"></i>'+r[3]+'</td></tr>').join('')+'</table>'
-    +'<div class="kd-foot">'+(kind==='cpi'?'CPI = Earned value \u00f7 Actual cost':'SPI = Earned value \u00f7 Planned value')+'</div>'
-    +'</div>';
-  const back=document.createElement('div'); back.className='kd-back'; back.innerHTML=html;
-  const close=()=>{ back.remove(); document.removeEventListener('keydown',onKey,true); };
-  const onKey=e=>{ if(e.key==='Escape'){ e.stopPropagation(); close(); } };
-  back.addEventListener('click',e=>{ if(e.target===back) close(); });
-  back.querySelector('.kd-x').addEventListener('click',close);
-  document.addEventListener('keydown',onKey,true);
-  document.body.appendChild(back);
-  back.querySelector('.kd-x').focus();
 }
 window.addEventListener('resize',()=>{
   if(document.getElementById('view-exec').classList.contains('active') && window.__execList) renderExec(window.__execList());
