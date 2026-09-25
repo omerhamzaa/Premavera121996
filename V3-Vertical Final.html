@@ -3401,8 +3401,10 @@ paintChip();
    Users tab columns:  Username | Password | Permission
    Permission cell = tab names separated by commas, e.g.
        V3, Elevation, Executive View
-   Tab names understood: V3, V4, Elevation, V6, Executive View, Database Sync, Month Filter
+   Tab names understood: V3, V4, Elevation, V6, Executive View, Project Detail, Cost View,
+   Units View, Delayed Activities, Refresh Logs, Database Sync, Month Filter
    (Month Filter = may change the Executive View S-curve months filter)
+   Example: "V4, Cost View" = V4 dashboard + Cost View showing V4 only.
    No password is stored in this file — every check reads the Users tab live.
    "All" or "*" (or an empty cell) = every tab.
    Note: this is a static HTML file reading a public sheet, so this is casual
@@ -3443,8 +3445,13 @@ function parsePermission(raw){
   if(!toks.length || toks.some(x => x === 'all' || x === 'any' || x === 'full')) return ALL_TABS.slice();
   return withDetail(ALL_TABS.filter(k => toks.some(x => TAB_ALIASES[k].indexOf(x) >= 0)));
 }
-/* Project Detail opens for anyone who can see V3, V4 or Elevation (it only shows the projects they are allowed) */
-function withDetail(t){ if(['v3','v4','elev'].some(k=>t.indexOf(k)>=0)) ['detail','cost','units','delay'].forEach(k=>{ if(t.indexOf(k)<0) t.push(k); });
+/* A project name (V3, V4, Elevation, V6) only opens THAT project's own dashboard tab.
+   Project Detail / Cost View / Units View / Delayed Activities open ONLY when they are
+   written in the Permission cell themselves — and inside them the user sees only the
+   projects he is allowed. If no project is allowed, those four tabs stay closed. */
+function withDetail(t){
+  if(!['v3','v4','elev','v6'].some(k=>t.indexOf(k)>=0))
+    t = t.filter(k=>['detail','cost','units','delay'].indexOf(k)<0);
   if(t.indexOf('sync')>=0 && t.indexOf('logs')<0) t.push('logs');   // whoever manages Database Sync also sees the logs
   return t; }
 
