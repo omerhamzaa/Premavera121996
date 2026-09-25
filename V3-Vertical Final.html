@@ -77,7 +77,8 @@ body{
 .card .sub{font-size:10.5px;color:var(--muted);margin:-6px 0 8px}
 
 .kpis{grid-column:span 5;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.mid{grid-column:span 3;display:grid;grid-template-rows:auto auto;gap:12px}
+.mid{grid-column:span 3;display:grid;grid-template-rows:auto auto 1fr;gap:12px}
+.kpis .pc-card{grid-column:span 2}
 .scurve{grid-column:span 4}
 @media(max-width:1100px){.kpis,.mid,.scurve{grid-column:span 12}.kpis{grid-template-columns:1fr 1fr}}
 
@@ -92,7 +93,7 @@ body{
 .datebox .lbl{font-size:11px;color:var(--muted)}
 .datebox .big{font-size:20px;font-weight:650;color:var(--teal-deep);margin-top:4px;letter-spacing:-.01em}
 .datebox .big.delay{color:var(--bad)}
-.datebox .dsrc{font-size:10.5px;color:var(--muted);margin-top:3px;min-height:13px}
+.datebox .dsrc{display:none!important}
 .health{display:flex;align-items:center;justify-content:center;gap:9px;font-size:15px;font-weight:600;padding:10px 0}
 
 table{width:100%;border-collapse:collapse}
@@ -116,7 +117,7 @@ tfoot td{font-weight:650;background:var(--teal-soft);border-top:2px solid var(--
 .bars{display:flex;flex-direction:column;gap:3px}
 .bar{height:11px;border-radius:2px;position:relative;background:var(--line-soft)}
 .bar span{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
-.bar b{position:absolute;top:-2px;font-size:10px;font-weight:600;color:var(--muted);padding-left:4px}
+.bar b{position:absolute;top:-2px;font-size:10.5px;font-weight:700;color:#1F2A29;padding-left:4px}
 /* ---------- bar version of the category table ---------- */
 .btbl{table-layout:fixed;min-width:640px}
 .btbl th{font-size:10px;letter-spacing:.02em;padding:6px 8px}
@@ -127,7 +128,8 @@ tfoot td{font-weight:650;background:var(--teal-soft);border-top:2px solid var(--
 .btbl tbody tr:hover{background:var(--teal-soft)}
 .btbl tfoot td{padding:6px 8px}
 .btbl td.num{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
-.btbl td.num small{display:block;font-size:9.5px;font-weight:500;opacity:.75}
+.btbl td.num small{display:block;font-size:10px;font-weight:600;opacity:1}
+.btbl td.pos{color:#1E6B45;font-weight:700}.btbl td.neg{color:#A8321F;font-weight:700}.btbl td.zero{color:#9A6A08;font-weight:700}
 .bwrap{display:flex;align-items:center;gap:7px}
 .bpct{width:46px;flex:0 0 46px;text-align:right;font-size:10.5px;font-weight:700;color:#000;
   font-variant-numeric:tabular-nums}
@@ -211,7 +213,9 @@ body{background:#F3F1EA}
 .kpis{gap:14px}
 .mid{gap:14px}
 .datebox .big{font-family:var(--disp);font-size:26px;font-weight:700}
-.datebox .lbl{font-size:11.5px}
+.datebox .big.delay{font-size:64px;line-height:1;margin-top:10px}
+@media(max-width:760px){.datebox .big.delay{font-size:44px}}
+.datebox .lbl{font-size:12px;color:#2F3A39;font-weight:600}
 .datebox{display:flex;flex-direction:column;justify-content:center}
 .gval{font-family:var(--disp);font-size:24px;font-weight:700}
 .tbl table th{background:var(--teal-deep)}
@@ -310,7 +314,36 @@ body{background:#F3F1EA}
 .userchip button:hover{background:rgba(255,255,255,.12)}
 @media print{#loginGate,.userchip{display:none!important}}
 
-#sc{flex:1 1 auto;min-height:260px;position:relative}
+#sc{flex:0 0 auto;height:320px;min-height:0;position:relative}
+.card.scurve{align-self:start}
+/* ---- top block: gauges + progress | dates, delay, CPI, health | S-curve ---- */
+.top3{grid-column:span 12;display:grid;grid-template-columns:1.35fr 1.15fr 1.9fr;gap:14px;align-items:stretch}
+.t3-left{display:grid;grid-template-rows:auto 1fr;gap:14px;min-width:0}
+.t3-gauges{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.t3-gauges .gaugewrap svg{max-width:160px}
+.t3-mid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr;gap:14px;min-width:0}
+.t3-mid .datebox .big{font-size:20px;white-space:nowrap}
+.t3-mid > .card{min-width:0;overflow:hidden}
+.t3-mid .datebox{padding:14px 6px}
+.t3-gauges h2{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t3-cpi h2{font-size:12px;line-height:1.25}
+.t3-mid .datebox .big.delay{font-size:48px;margin-top:6px}
+.t3-cpi .gaugewrap svg{max-width:130px}
+.t3-cpi h2{text-align:center}
+.t3-health{grid-column:span 2;display:flex;flex-direction:column}
+.t3-health .health{flex:1;font-size:20px}
+.t3-health .health .dot{width:18px!important;height:18px!important}
+.top3 .card.scurve{align-self:stretch;grid-column:auto}
+.top3 #sc{flex:1 1 auto;height:auto;min-height:300px}
+.money-strip{grid-column:span 12}
+.money-strip table{width:100%}
+.money-strip tbody{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.money-strip tr{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line-soft);border-radius:8px;background:#FCFBF7;padding:8px 12px}
+.money-strip td{padding:0!important;text-align:left!important}
+.money-strip td+td{font-size:15px}
+@media(max-width:1300px){.top3{grid-template-columns:1fr 1fr}.top3 .card.scurve{grid-column:span 2}.money-strip tbody{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.top3,.t3-mid{grid-template-columns:1fr}.top3 .card.scurve,.t3-health{grid-column:auto}.t3-mid{grid-template-columns:1fr 1fr}.t3-health{grid-column:span 2}.money-strip tbody{grid-template-columns:1fr 1fr}}
+
 #sc > svg,.ex-plot > svg{position:absolute;inset:0}
 .sc-tip{position:absolute;z-index:30;pointer-events:none;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 22px rgba(30,42,43,.18);padding:8px 11px;min-width:170px;font-size:12.5px}
 .sc-tip .h{font-weight:700;font-size:13.5px;color:var(--ink);margin-bottom:4px}
@@ -426,6 +459,138 @@ body.ex-fs-on{overflow:hidden}
 .projcard .pc-note{font-size:11px;color:var(--muted)}
 .projcard .drow{margin-top:8px}
 
+
+/* ---------- Project Detail tab ---------- */
+.dt-sub{display:flex;gap:6px;flex-wrap:wrap}
+.dt-card{padding:0!important;overflow:hidden;margin-bottom:14px}
+/* ---------- full-screen (zoom) button on every table ---------- */
+.zbtn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:11.5px;font-weight:600;line-height:1;padding:5px 10px;border:1px solid #D9D3C6;border-radius:999px;background:#fff;color:var(--teal-deep);cursor:pointer;white-space:nowrap}
+.zbtn:hover{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep)}
+.zbtn svg{flex:none}
+#view-dashboard .card.tbl{position:relative}
+#view-dashboard .card.tbl > .zbtn{position:absolute;top:12px;right:14px;z-index:6}
+#view-dashboard .card.tbl > h2,#view-dashboard .card.tbl > .tabs{padding-right:150px}
+.zbar{display:flex;justify-content:flex-end;padding:8px 10px;border-bottom:1px solid var(--line-soft);background:#FCFBF7}
+.zoomed{position:fixed!important;inset:12px;z-index:9500;margin:0!important;overflow:auto!important;box-shadow:0 20px 60px rgba(0,0,0,.35)!important;background:#fff}
+.zoomed .dt-scroll,.zoomed .dt-scroll{max-height:none!important}
+.zoomed.dt-card{display:flex;flex-direction:column}
+.zoomed.dt-card .dt-scroll{flex:1 1 auto;overflow:auto}
+.zoomed .zbar{position:sticky;top:0;z-index:7}
+#view-dashboard .card.tbl.zoomed > .zbtn{position:fixed;top:24px;right:28px}
+body.has-zoom{overflow:hidden}
+.zoomed table{font-size:14px}
+body.has-zoom::before{content:"";position:fixed;inset:0;background:rgba(19,42,44,.55);z-index:9400}
+@media print{.zbtn,.zbar{display:none!important}}
+
+.dt-scroll{max-height:340px;overflow:auto}
+.dt-tbl{width:100%;border-collapse:collapse;min-width:1080px}
+.dt-tbl th{background:#F6C467!important;color:#1E2A2B!important;font-size:11.5px;font-weight:700;text-align:center!important;
+  position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;border-bottom:1px solid #E0A93B;white-space:nowrap}
+.dt-tbl th:hover{background:#F0B84E!important}
+.dt-tbl th .ar{font-size:9px;margin-left:3px;opacity:.75}
+.dt-tbl td{font-size:12px;font-variant-numeric:tabular-nums}
+.dt-tbl td:first-child{font-weight:600;color:var(--ink)}
+.dt-tbl td.b{font-weight:700}
+.dt-tbl td.sep,.dt-tbl th.sep{border-left:1px solid var(--line)}
+.dt-tbl tbody tr:nth-child(even) td{background:#FBFAF6}
+.dt-tbl tbody tr:hover td{background:var(--teal-soft)}
+.dt-tbl tfoot td{position:sticky;bottom:0;z-index:1;background:#F3EFE4;font-weight:700;border-top:2px solid var(--teal)}
+.dt-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px;box-shadow:inset 0 -2px 3px rgba(0,0,0,.18)}
+.dt-dot.pos{background:#3E9C6B}.dt-dot.neg{background:#D0413A}.dt-dot.zero{background:#E0A93B}
+.dt-note{font-size:11px;color:var(--muted);margin:2px 0 12px}
+.dt-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px}
+.dt-bar .dt-lbl{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--teal-deep)}
+.dt-bar .btn[aria-pressed="true"]{background:var(--teal);color:#fff}
+.dt-bar small{font-size:11px;color:var(--muted)}
+@media(max-width:760px){.dt-scroll{max-height:none}}
+/* ---------- Cost View tab ---------- */
+.cv-band{background:#fff;border:1px solid #C9D4D2;border-radius:10px;text-align:center;padding:7px 10px;margin:4px 0 10px;
+  font-family:var(--disp);font-size:20px;font-weight:700;color:var(--teal-deep);box-shadow:var(--shadow)}
+.cv-row{display:grid;grid-template-columns:170px repeat(6,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.cv-name,.cv-box{background:#F7F5EF;border:1px solid #E3DED2;border-radius:8px;box-shadow:var(--shadow)}
+.cv-name{display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-size:18px;font-weight:700;color:var(--ink);padding:8px}
+.cv-box{text-align:center;padding:6px 6px 8px;min-width:0}
+.cv-box .l{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-box .v{font-family:var(--disp);font-size:32px;font-weight:700;color:var(--ink);line-height:1.15;margin-top:2px;font-variant-numeric:tabular-nums}
+.cv-box .p{font-size:10.5px;color:var(--muted);min-height:13px}
+.cv-box .v.pos{color:var(--good)}.cv-box .v.neg{color:var(--bad)}
+.cv-row.overall .cv-name{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep)}
+.cv-row.overall .cv-box{background:#EEF4F3;border-color:#C9D9D6}
+@media(max-width:900px){.cv-row{grid-template-columns:repeat(3,minmax(0,1fr))}.cv-name{grid-column:1/-1}}
+/* fit-to-screen mode (desktop): the whole Cost View fills the window without scrolling */
+#view-cost .section-head,#view-units .section-head{margin-bottom:8px}
+.xfilters{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:0 0 8px}
+.xgroup{position:relative;min-width:150px;flex:1 1 150px;max-width:230px}
+.xgroup>label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:3px}
+.xgroup:nth-last-of-type(-n+2) .fpanel{left:auto;right:0}
+.xfilters .fbtn{border-radius:7px;padding:7px 26px 7px 10px}
+.xfilters .fbtn.on{border-color:var(--teal);background:var(--teal-soft);font-weight:600}
+.xfilters .xnote{font-size:11px;color:var(--muted);align-self:center}
+.cv-host.fit{display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.cv-host.fit .cv-band{flex:0 0 auto;margin:0;padding:3px 10px;font-size:calc(min(20px,var(--cvh)*.30))}
+.cv-host.fit .cv-row{flex:1 1 0;min-height:0;margin:0;gap:8px}
+.cv-host.fit .cv-box{display:flex;flex-direction:column;justify-content:center;padding:2px 6px}
+.cv-host.fit .cv-box .l{font-size:calc(min(12px,var(--cvh)*.19));line-height:1.15}
+.cv-host.fit .cv-box .v{font-size:calc(min(36px,var(--cvh)*.58));margin-top:0;line-height:1.1}
+.cv-host.fit .cv-box .p{font-size:calc(min(10.5px,var(--cvh)*.15));min-height:0}
+.cv-host.fit .cv-name{font-size:calc(min(20px,var(--cvh)*.34));padding:2px 8px}
+.cv-host.fit.tight .cv-box .p{display:none}
+.cv-host.fit .dt-note{display:none}
+/* ---------- Delayed Activities tab ---------- */
+.da-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 12px}
+.da-bar input[type=search]{flex:0 1 280px;border:1px solid var(--line);border-radius:7px;padding:7px 10px;font:inherit;font-size:12.5px;background:#fff}
+.da-bar label{font-size:12px;color:var(--ink);display:flex;gap:6px;align-items:center;cursor:pointer}
+.da-bar input[type=checkbox]{accent-color:var(--teal)}
+.da-chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.da-chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:11.5px;color:var(--ink)}
+.da-chip b{color:var(--bad)}
+.da-sec{margin-bottom:16px}
+.da-pill{display:inline-block;background:#3F6B70;color:#fff;font-family:var(--disp);font-weight:700;font-size:17px;border-radius:8px;padding:6px 44px;margin:0 0 8px;box-shadow:var(--shadow)}
+.da-pill small{font-family:inherit;font-weight:600;font-size:12px;opacity:.85;margin-left:8px}
+.da-tbl td{font-size:12px}
+.da-tbl td.l{text-align:left;white-space:normal;min-width:220px}
+.da-tbl td.c{text-align:center}
+.da-crit{color:#D0413A;font-weight:700}
+.da-delay{background:#F25555!important;color:#fff;font-weight:700;text-align:center!important}
+.da-delay.d2{background:#F58A5B!important}.da-delay.d1{background:#F7B267!important;color:#3a2a10}
+.da-empty td{text-align:center!important;color:var(--muted);padding:16px!important}
+.da-st{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--line-soft);white-space:nowrap}
+.da-actions{display:inline-flex;gap:6px;margin-left:10px;vertical-align:middle}
+.da-actions .btn,.da-bar .btn{padding:5px 11px;font-size:12px}
+.da-print-only{display:none}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body.da-printing{background:#fff}
+  body.da-printing #loginGate, body.da-printing .appbar, body.da-printing .view:not(#view-delay),
+  body.da-printing #da-bar, body.da-printing .da-actions, body.da-printing #da-sub, body.da-printing #view-delay .dt-note{display:none!important}
+  body.da-printing .wrap{padding:0}
+  body.da-printing .da-print-only{display:block;font-size:11px;color:#555;margin:2px 0 8px}
+  body.da-printing .dt-scroll{max-height:none!important;overflow:visible!important}
+  body.da-printing .dt-tbl{min-width:0!important}
+  body.da-printing .dt-tbl th{position:static!important}
+  body.da-printing .dt-card{box-shadow:none!important;border:1px solid #ccc}
+  body.da-printing .da-sec.da-skip{display:none!important}
+  body.da-printing .da-sec{break-inside:auto;page-break-after:auto}
+  body.da-printing .da-sec + .da-sec{break-before:page;page-break-before:always}
+  body.da-printing .da-sec.da-first{break-before:auto!important;page-break-before:auto!important}
+  body.da-printing tr{break-inside:avoid}
+  body.da-printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.da-printing .da-tbl td,body.da-printing .da-tbl th{font-size:9.5px;padding:4px 5px}
+}
+.da-st.ip{background:#FCEFD0;color:#8A5A00}
+/* ---------- Refresh Logs tab + Drive backup ---------- */
+.drow input[type=password]{flex:0 1 200px;min-width:150px;padding:7px 10px;border:1px solid var(--line);border-radius:3px;font:inherit;font-size:12px}
+.lg-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 12px}
+.lg-bar select{border:1px solid var(--line);border-radius:7px;padding:6px 9px;font:inherit;font-size:12.5px;background:#fff}
+.lg-bar .lg-src{font-size:11.5px;color:var(--muted)}
+.lg-tbl td{font-size:12px}
+.lg-tbl td.l{text-align:left}
+.lg-ok{color:var(--good);font-weight:600}.lg-bad{color:var(--bad);font-weight:600}.lg-warn{color:#B8861B;font-weight:600}
+.lg-tbl a{color:var(--teal-deep);font-weight:600}
+#lg-toast{position:fixed;right:18px;bottom:18px;z-index:9999;background:#22484B;color:#fff;border-radius:10px;padding:10px 14px;font-size:12.5px;
+  box-shadow:0 10px 26px rgba(0,0,0,.25);max-width:380px;display:none;line-height:1.45}
+#lg-toast a{color:#F6C467;font-weight:700}
+#lg-toast.bad{background:#8E2F24}.da-st.ns{background:#F9DCDC;color:#9B2C2C}.da-st.cp{background:#DDF0E4;color:#1F6B42}
 </style>
 </head>
 <body>
@@ -465,6 +630,11 @@ body.ex-fs-on{overflow:hidden}
       <button type="button" role="tab" data-go="dashboard" data-project="elev" aria-selected="false">Elevation</button>
       <button type="button" role="tab" data-go="dashboard" data-project="v6" aria-selected="false">V6</button>
       <button type="button" role="tab" data-go="exec" aria-selected="false">📈 Executive View</button>
+      <button type="button" role="tab" data-go="detail" aria-selected="false">📋 Project Detail</button>
+      <button type="button" role="tab" data-go="cost" aria-selected="false">💰 Cost View</button>
+      <button type="button" role="tab" data-go="units" aria-selected="false">📦 Units View</button>
+      <button type="button" role="tab" data-go="delay" aria-selected="false">⏱ Delayed Activities</button>
+      <button type="button" role="tab" data-go="logs" aria-selected="false">🗂 Refresh Logs</button>
       <button type="button" role="tab" data-go="sync" aria-selected="false">🔒 Database Sync</button>
     </nav>
     <span class="spacer"></span>
@@ -500,57 +670,65 @@ body.ex-fs-on{overflow:hidden}
   </div>
 
   <div class="grid" id="dash-grid">
-    <div class="kpis">
-      <div class="card">
-        <h2>Progress %</h2>
-        <div class="gaugewrap" id="g-progress"></div>
-        <div class="legendrow">
-          <span><i class="dot" style="background:var(--teal)"></i>Actual earned</span>
-          <span><i class="dot" style="background:var(--gold)"></i>Planned marker</span>
+    <div class="top3">
+      <div class="t3-left">
+        <div class="t3-gauges">
+          <div class="card">
+            <h2>Progress %</h2>
+            <div class="gaugewrap" id="g-progress"></div>
+            <div class="legendrow">
+              <span><i class="dot" style="background:var(--teal)"></i>Actual earned</span>
+              <span><i class="dot" style="background:var(--gold)"></i>Planned marker</span>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Schedule performance (SPI)</h2>
+            <div class="gaugewrap" id="g-spi"></div>
+            <div class="legendrow"><span id="spitxt"></span></div>
+          </div>
+        </div>
+        <div class="card pc-card t3-pc">
+          <h2>Progress completion</h2>
+          <div class="sub">Planned vs actual, weighted by budgeted cost</div>
+          <div id="bars"></div>
+          <div class="legendrow">
+            <span><i class="dot" style="background:var(--teal)"></i>Planned %</span>
+            <span><i class="dot" style="background:var(--gold)"></i>Actual %</span>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <h2>Schedule performance (SPI)</h2>
-        <div class="gaugewrap" id="g-spi"></div>
-        <div class="legendrow"><span id="spitxt"></span></div>
+
+      <div class="t3-mid">
+        <div class="card datebox"><div class="lbl">Planned end date</div><div class="big" id="k-pend">—</div></div>
+        <div class="card datebox"><div class="lbl">Expected end date</div><div class="big" id="k-eend">—</div><div class="dsrc" id="k-dsrc"></div></div>
+        <div class="card datebox"><div class="lbl">Project delay (days)</div><div class="big delay" id="k-delay">—</div></div>
+        <div class="card t3-cpi">
+          <h2>Cost efficiency (CPI)</h2>
+          <div class="gaugewrap" id="g-cpi"></div>
+        </div>
+        <div class="card t3-health">
+          <h2>Budget health</h2>
+          <div class="health" id="k-health"></div>
+        </div>
       </div>
-      <div class="card datebox"><div class="lbl">Planned end date</div><div class="big" id="k-pend">—</div></div>
-      <div class="card datebox"><div class="lbl">Expected end date</div><div class="big" id="k-eend">—</div><div class="dsrc" id="k-dsrc"></div></div>
-      <div class="card datebox"><div class="lbl">Project delay (days)</div><div class="big delay" id="k-delay">—</div></div>
-      <div class="card">
-        <h2>Cost efficiency (CPI)</h2>
-        <div class="gaugewrap" id="g-cpi"></div>
-        <div class="health" id="k-health"></div>
+
+      <div class="card scurve">
+        <h2>S-curve trend</h2>
+        <div class="scf-wrap" id="scf-dash"></div>
+        
+        <div id="sc"></div>
+        <div class="legendrow">
+          <span><i class="dot" style="background:var(--teal)"></i>Planned</span>
+          <span><i class="dot" style="background:var(--gold)"></i>Actual</span>
+          <span><i class="dot" style="background:#9C5B3C"></i>Earned</span>
+        </div>
       </div>
     </div>
 
-    <div class="mid">
-      <div class="card">
-        <h2>Progress completion</h2>
-        <div class="sub">Planned vs actual, weighted by budgeted cost</div>
-        <div id="bars"></div>
-        <div class="legendrow">
-          <span><i class="dot" style="background:var(--teal)"></i>Planned %</span>
-          <span><i class="dot" style="background:var(--gold)"></i>Actual %</span>
-        </div>
-      </div>
-      <div class="card">
+      <div class="card money-strip">
         <h2>Where the money stands</h2>
         <div id="moneyfacts"></div>
       </div>
-    </div>
-
-    <div class="card scurve">
-      <h2>S-curve trend</h2>
-      <div class="scf-wrap" id="scf-dash"></div>
-      <div class="sub">Cumulative % of total budget — planned, earned and actual</div>
-      <div id="sc"></div>
-      <div class="legendrow">
-        <span><i class="dot" style="background:var(--teal)"></i>Planned</span>
-        <span><i class="dot" style="background:var(--gold)"></i>Actual</span>
-        <span><i class="dot" style="background:#9C5B3C"></i>Earned</span>
-      </div>
-    </div>
 
     <div class="card tbl">
       <div class="tabs" role="tablist">
@@ -598,6 +776,114 @@ body.ex-fs-on{overflow:hidden}
       <button class="btn ghost ex-lab" id="ex-lab" type="button" aria-pressed="false" title="Cost boxes leave out Plumbing and Finishing labour. Press to add it in.">Add excluded labour cost</button>
     </div>
     <div class="exec-grid" id="exec-grid"></div>
+  </section>
+
+  <section class="view" id="view-detail">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Cost &amp; units by major item</div>
+        <h2 id="dt-title">Project Detail</h2>
+        <p class="lead">Grey, MEP and Finishing — budgeted, planned, earned and actual, one project at a time</p>
+      </div>
+      <span class="spacer"></span>
+      <div class="dt-sub" id="dt-sub" role="tablist">
+        <button class="tab" type="button" data-dtp="v3" aria-selected="true">V3 Business Centre</button>
+        <button class="tab" type="button" data-dtp="v4" aria-selected="false">V4 Grand Vertical</button>
+        <button class="tab" type="button" data-dtp="elev" aria-selected="false">Elevation</button>
+      </div>
+    </div>
+    <div id="dt-host"></div>
+  </section>
+
+  <section class="view" id="view-cost">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Cost summary</div>
+        <h2 id="cv-title">Cost View</h2>
+      </div>
+      <span class="spacer"></span>
+      <div class="dt-sub" id="cv-sub" role="tablist">
+        <button class="tab" type="button" data-cvp="v3" aria-selected="true">V3 Business Centre</button>
+        <button class="tab" type="button" data-cvp="v4" aria-selected="false">V4 Grand Vertical</button>
+        <button class="tab" type="button" data-cvp="elev" aria-selected="false">Elevation</button>
+      </div>
+    </div>
+    <div class="xfilters" id="cv-filters">
+      <div class="xgroup" data-key="dept"><label>Category</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <div class="xgroup" data-key="maj"><label>Major Items</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <div class="xgroup" data-key="flr"><label>Floor</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <div class="xgroup" data-key="itm"><label>Items</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <button class="btn ghost" type="button" data-xclear="1">Clear filters</button>
+      <span class="xnote"></span>
+    </div>
+    <div id="cv-host" class="cv-host"></div>
+  </section>
+
+  <section class="view" id="view-units">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Units summary</div>
+        <h2 id="uv-title">Units View</h2>
+      </div>
+      <span class="spacer"></span>
+      <div class="dt-sub" id="uv-sub" role="tablist">
+        <button class="tab" type="button" data-cvp="v3" aria-selected="true">V3 Business Centre</button>
+        <button class="tab" type="button" data-cvp="v4" aria-selected="false">V4 Grand Vertical</button>
+        <button class="tab" type="button" data-cvp="elev" aria-selected="false">Elevation</button>
+      </div>
+    </div>
+    <div class="xfilters" id="uv-filters">
+      <div class="xgroup" data-key="dept"><label>Category</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <div class="xgroup" data-key="maj"><label>Major Items</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <div class="xgroup" data-key="flr"><label>Floor</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <div class="xgroup" data-key="itm"><label>Items</label><button class="fbtn" type="button">All</button><div class="fpanel"></div></div>
+      <button class="btn ghost" type="button" data-xclear="1">Clear filters</button>
+      <span class="xnote"></span>
+    </div>
+    <div id="uv-host" class="cv-host"></div>
+  </section>
+
+  <section class="view" id="view-delay">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Delayed activities according to planned start and finish</div>
+        <h2 id="da-title">Delayed Activities</h2>
+      </div>
+      <span class="spacer"></span>
+      <div class="dt-sub" id="da-sub" role="tablist">
+        <button class="tab" type="button" data-dap="v3" aria-selected="true">V3 Business Centre</button>
+        <button class="tab" type="button" data-dap="v4" aria-selected="false">V4 Grand Vertical</button>
+        <button class="tab" type="button" data-dap="elev" aria-selected="false">Elevation</button>
+      </div>
+    </div>
+    <div class="da-bar" id="da-bar">
+      <input type="search" id="da-q" placeholder="Search activity ID or name">
+      <label><input type="checkbox" id="da-crit"> Critical only</label>
+      <label>As of <input type="date" id="da-asof" style="border:1px solid var(--line);border-radius:7px;padding:5px 8px;font:inherit;font-size:12px"></label>
+      <label><input type="checkbox" id="da-done"> Include completed (finished late)</label>
+      <button class="btn ghost" type="button" data-daprint="all">🖨 Print all</button>
+      <button class="btn ghost" type="button" data-dapdf="all">⬇ Save all as PDF</button>
+      <div class="da-chips" id="da-chips"></div>
+    </div>
+    <div class="da-print-only" id="da-print-info"></div>
+    <div id="da-host"></div>
+  </section>
+
+  <section class="view" id="view-logs">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">History</div>
+        <h2>Refresh Logs</h2>
+        <p class="lead">Every manual refresh, with a PDF of the dashboard reports at that moment (saved in your Google Drive)</p>
+      </div>
+    </div>
+    <div class="lg-bar">
+      <label style="font-size:12px">Project
+        <select id="lg-proj"><option value="">All projects</option><option value="v3">V3 Business Centre</option><option value="v4">V4 Grand Vertical</option><option value="elev">Elevation</option><option value="v6">V6</option></select></label>
+      <button class="btn ghost" type="button" id="lg-reload">Reload list</button>
+      <span class="lg-src" id="lg-src"></span>
+    </div>
+    <div id="lg-host"></div>
   </section>
 
   <section class="view" id="view-sync">
@@ -681,10 +967,29 @@ body.ex-fs-on{overflow:hidden}
       </div>
       <div class="dlog" id="d-log-v6"></div>
     </div>
+    <div class="card tbl" id="lg-card">
+      <h2>Refresh logs &amp; PDF backup (Google Drive)</h2>
+      <div class="dnote" style="margin-top:0">Each time you press <b>Refresh</b> on a project, the dashboard makes a PDF of that project&rsquo;s reports
+        (KPIs, S-curve, cost &amp; units summary, project detail, delayed activities), saves it in your Google Drive and writes a line in the
+        <b>Refresh Logs</b> tab. It needs a small Google Apps Script (file <code>RefreshLogs_AppsScript.gs</code>) deployed once from your Google account &mdash;
+        paste its web app URL and key below.</div>
+      <div class="drow">
+        <input id="lg-url" type="text" placeholder="Apps Script web app URL  (https://script.google.com/macros/s/&hellip;/exec)">
+        <input id="lg-key" type="password" placeholder="Key (same as KEY in the script)">
+        <button class="btn" id="lg-save" type="button">Save</button>
+        <button class="btn ghost" id="lg-test" type="button">Test connection</button>
+      </div>
+      <div class="drow">
+        <label><input type="checkbox" id="lg-on"> Save a PDF report and a log line on every manual refresh</label>
+        <span class="spacer"></span>
+        <button class="btn" id="lg-refresh-all" type="button">Refresh all projects &amp; save reports</button>
+      </div>
+      <div class="dlog" id="lg-status"></div>
+    </div>
     <div class="card tbl">
       <h2>Settings &amp; help</h2>
       <div class="drow" style="margin-top:4px">
-        <label><input type="checkbox" id="d-auto" checked> Auto refresh every 5 minutes (all connected projects)</label>
+        <label><input type="checkbox" id="d-auto"> Auto refresh every 5 minutes (all connected projects)</label>
         <span class="spacer"></span>
         <button class="btn ghost" id="d-guide" type="button">Setup guide</button>
       </div>
@@ -1300,6 +1605,11 @@ function showView(name){
   });
   if(name==='dashboard' && !document.getElementById('dash-grid').hidden){ const sc=document.getElementById('sc'); if(sc) scurve(sc); }
   if(name==='exec' && window.__execList) renderExec(window.__execList());
+  if(name==='detail') renderDetail();
+  if(name==='cost') renderCost();
+  if(name==='units') renderUnits();
+  if(name==='delay') renderDelay();
+  if(name==='logs') renderLogs();
   window.scrollTo({top:0});
 }
 
@@ -1527,7 +1837,670 @@ document.addEventListener('keydown',e=>{
 });
 window.__renderExec = function(list){
   if(document.getElementById('view-exec').classList.contains('active')) renderExec(list);
+  if(document.getElementById('view-detail').classList.contains('active')) renderDetail();
+  if(document.getElementById('view-cost').classList.contains('active')) renderCost();
+  if(document.getElementById('view-units').classList.contains('active')) renderUnits();
+  if(document.getElementById('view-delay').classList.contains('active')) renderDelay();
 };
+/* ---------- Project Detail tab: Grey / MEP / Finishing tables per project ---------- */
+const DT_PROJ={v3:'V3 Business Centre', v4:'V4 Grand Vertical', elev:'Elevation'};
+const DT_MEP=['Electrical','Firefighting','HVAC','Plumbing','VTS'];
+const DT_COLS=[
+  {k:'bcost',t:'Budgeted Cost',b:1},{k:'pcost',t:'Planned Cost',d:2},{k:'ecost',t:'Earned Value'},{k:'acost',t:'Actual Cost'},{k:'scost',t:'Saving Cost',dot:1},
+  {k:'bqty',t:'Budgeted Units',sep:1},{k:'pqty',t:'Planned Units'},{k:'eqty',t:'Earned Units'},{k:'aqty',t:'Actual Units'},{k:'squ',t:'Saved Units',dot:1}];
+let dtProject='v3';
+/* Finishing: 'Miscellaneous - Finishes' is hidden by default (matches Power BI); a button adds it back */
+const DT_FIN_HIDE=['Miscellaneous - Finishes'];
+let dtFinMisc=false; try{ dtFinMisc = localStorage.getItem('dtFinMisc')==='1'; }catch(e){}
+const dtSort={};   // group -> {k, dir}
+function dtIsLabour(d,r){ return r[C.lab]===1 || /^labour\b/i.test(d.majs[r[IDX.maj]]||''); }
+// Grey + Finishing: material items only. MEP: labour included, except Plumbing labour (same rule as the dashboard).
+function dtGroups(d){
+  const out=[
+    {name:'Grey', test:(dep,r)=>dep==='Grey' && !dtIsLabour(d,r)},
+    {name:'MEP', test:(dep,r)=>DT_MEP.indexOf(dep)>=0 && !(dtIsLabour(d,r) && LABOUR_EXCLUDED.indexOf(dep)>=0)},
+    {name:'Finishing', test:(dep,r)=>dep==='Finishing' && !dtIsLabour(d,r) && (dtFinMisc || DT_FIN_HIDE.indexOf(d.majs[r[IDX.maj]])<0)}];
+  const known=['Grey','Finishing'].concat(DT_MEP);
+  const extra=[...new Set(d.depts)].filter(x=>known.indexOf(x)<0)
+    .sort((a,b)=>{const i=ORDER.indexOf(a),j=ORDER.indexOf(b);return (i<0?99:i)-(j<0?99:j)||a.localeCompare(b);});
+  extra.forEach(x=>out.push({name:x, test:(dep)=>dep===x}));
+  return out;
+}
+function dtAgg(d,g){
+  const m=new Map();
+  d.rows.forEach(r=>{
+    const dep=d.depts[r[IDX.dept]]; if(!g.test(dep,r)) return;
+    const k=d.majs[r[IDX.maj]];
+    if(!m.has(k)) m.set(k,blank());
+    add(m.get(k),r);
+  });
+  return [...m.entries()].map(([name,t])=>Object.assign({name:name},t,{scost:t.ecost-t.acost,squ:t.eqty-t.aqty}));
+}
+function dtCell(c,v){
+  const txt = c.d ? nf2(v) : nf0(v);
+  if(!c.dot) return '<td class="'+(c.b?'b':'')+(c.sep?' sep':'')+'">'+txt+'</td>';
+  const r=Math.round(v*100)/100, cls = r>0?'pos':r<0?'neg':'zero';
+  return '<td style="text-align:left"><i class="dt-dot '+cls+'"></i>'+nf0(v)+'</td>';
+}
+function dtTable(g,rows){
+  const st=dtSort[g]||(dtSort[g]={k:'ecost',dir:-1});
+  rows.sort((a,b)=> st.k==='name' ? st.dir*a.name.localeCompare(b.name) : st.dir*((a[st.k]-b[st.k])||a.name.localeCompare(b.name)));
+  const tot=rows.reduce((t,r)=>{DT_COLS.forEach(c=>t[c.k]=(t[c.k]||0)+r[c.k]);return t;},{});
+  const ar=k=> st.k===k ? '<span class="ar">'+(st.dir<0?'\u25BC':'\u25B2')+'</span>' : '';
+  let h='<tr><th data-dsort="name" style="text-align:left!important">'+esc(g)+ar('name')+'</th>'
+    +DT_COLS.map(c=>'<th data-dsort="'+c.k+'"'+(c.sep?' class="sep"':'')+'>'+c.t+ar(c.k)+'</th>').join('')+'</tr>';
+  const body=rows.map(r=>'<tr><td>'+esc(r.name)+'</td>'+DT_COLS.map(c=>dtCell(c,r[c.k])).join('')+'</tr>').join('');
+  const foot='<tr><td>Total</td>'+DT_COLS.map(c=>dtCell(c,tot[c.k]||0)).join('')+'</tr>';
+  return '<div class="card dt-card" data-grp="'+esc(g)+'"><div class="dt-scroll"><table class="dt-tbl"><thead>'+h+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div></div>';
+}
+function renderDetail(){
+  const host=document.getElementById('dt-host'); if(!host) return;
+  const allowed=pid=> !window.__tabAllowed || window.__tabAllowed(pid);
+  document.querySelectorAll('#dt-sub [data-dtp]').forEach(b=>{ b.style.display = allowed(b.dataset.dtp)?'':'none'; });
+  if(!allowed(dtProject)){ const f=Object.keys(DT_PROJ).find(allowed); if(f) dtProject=f; }
+  document.querySelectorAll('#dt-sub [data-dtp]').forEach(b=>b.setAttribute('aria-selected', b.dataset.dtp===dtProject?'true':'false'));
+  document.getElementById('dt-title').textContent='Project Detail \u2014 '+DT_PROJ[dtProject];
+  const it=(window.__execList?window.__execList():[]).find(x=>x.pid===dtProject);
+  const d=it&&it.data;
+  if(!d || !d.rows || !d.rows.length){
+    host.innerHTML='<div class="card empty-state"><div class="es-icon" aria-hidden="true">\uD83D\uDD17</div><h3>No data connected for '+esc(DT_PROJ[dtProject])+' yet</h3>'
+      +'<p>Connect this project\u2019s Google Sheet on the Database Sync tab. Its Grey, MEP and Finishing tables fill in as soon as the sheet loads.</p></div>';
+    return;
+  }
+  const keepX=[...host.querySelectorAll('.dt-scroll')].map(el=>[el.scrollLeft,el.scrollTop]);
+  let html='<p class="dt-note">Click any column heading to sort. Saving = Earned \u2212 Actual (green = saving, red = over, amber = nil). Grey and Finishing show material items; MEP includes labour except Plumbing labour.</p>';
+  const hiddenB=d.rows.filter(r=>d.depts[r[IDX.dept]]==='Finishing' && DT_FIN_HIDE.indexOf(d.majs[r[IDX.maj]])>=0).reduce((a,r)=>a+r[C.bcost],0);
+  dtGroups(d).forEach(g=>{ const rows=dtAgg(d,g); if(!rows.length) return;
+    if(g.name==='Finishing' && hiddenB){
+      html+='<div class="dt-bar"><span class="dt-lbl">Finishing</span><button class="btn ghost" type="button" id="dt-finmisc" aria-pressed="'+dtFinMisc+'">'
+        +(dtFinMisc?'\u2212 Remove Miscellaneous - Finishes':'+ Add Miscellaneous - Finishes')+'</button>'
+        +'<small>'+(dtFinMisc?'Included in the Finishing total':'Hidden (budget '+nf0(hiddenB)+')')+'</small></div>';
+    }
+    html+=dtTable(g.name,rows); });
+  host.innerHTML=html;
+  host.querySelectorAll('.dt-scroll').forEach((el,i)=>{ if(keepX[i]){ el.scrollLeft=keepX[i][0]; el.scrollTop=keepX[i][1]; } });
+  const fm=document.getElementById('dt-finmisc');
+  if(fm) fm.addEventListener('click',()=>{ dtFinMisc=!dtFinMisc; try{ localStorage.setItem('dtFinMisc',dtFinMisc?'1':'0'); }catch(e){} renderDetail(); });
+  host.querySelectorAll('th[data-dsort]').forEach(th=>th.addEventListener('click',()=>{
+    const g=th.closest('.dt-card').dataset.grp, k=th.dataset.dsort, st=dtSort[g];
+    if(st.k===k) st.dir=-st.dir; else { st.k=k; st.dir = k==='name'?1:-1; }
+    renderDetail();
+  }));
+}
+document.querySelectorAll('#dt-sub [data-dtp]').forEach(b=>b.addEventListener('click',()=>{
+  if(window.__tabAllowed && !window.__tabAllowed(b.dataset.dtp)){ if(window.__tabDenied) window.__tabDenied(); return; }
+  dtProject=b.dataset.dtp; renderDetail();
+}));
+/* ---------- Cost View + Units View tabs: overall + category-wise boxes per project, with filters ---------- */
+let cvProject='v3';                          // shared by Cost View and Units View
+const CV_CATS=[['Grey','Grey'],['Electrical','Electrical'],['HVAC','HVAC'],['Firefighting','Fire Fighting'],['Plumbing','Plumbing'],['VTS','VTS'],['Finishing','Finishing']];
+const CV_MODE={
+  cost:{host:'cv-host',title:'cv-title',sub:'cv-sub',filt:'cv-filters',name:'Cost View',k:['bcost','pcost','ecost','acost'],
+        l:['Budgeted Cost','Planned Cost','Earned Cost','Actual Cost','Project Remaining Cost'],what:'Cost',rs:'Rs ',rem:3},
+  unit:{host:'uv-host',title:'uv-title',sub:'uv-sub',filt:'uv-filters',name:'Units View',k:['bqty','pqty','eqty','aqty'],
+        l:['Budgeted Units','Planned Units','Earned Units','Actual Units','Project Remaining Units'],what:'Units',rs:'',rem:2}};
+const xSel={dept:new Set(), maj:new Set(), flr:new Set(), itm:new Set()};   // filters shared by both views
+let xSelProject='v3';
+function cvFmt(v){                       // Power BI style: 2bn / 986M / 232K / 9259
+  const a=Math.abs(v), sg=v<0?'-':'';
+  if(a<0.5) return '0';
+  if(a>=1e9) return sg+(+(a/1e9).toFixed(2)).toString()+'bn';
+  if(a>=1e6) return sg+Math.round(a/1e6)+'M';
+  if(a>=1e4) return sg+Math.round(a/1e3)+'K';
+  return sg+Math.round(a);
+}
+function xMatch(d,r,skip){
+  for(const k in xSel){ if(k===skip) continue; const s=xSel[k]; if(s.size && !s.has(d[F[k]][r[IDX[k]]])) return false; }
+  return true;
+}
+function xActive(){ return Object.keys(xSel).some(k=>xSel[k].size); }
+function cvData(){ const it=(window.__execList?window.__execList():[]).find(x=>x.pid===cvProject); return it&&it.data; }
+function cvBox(M,i,v,base){
+  const pc = base ? (v/base*100).toFixed(1)+'% of budget' : '';
+  return '<div class="cv-box" title="'+M.l[i]+': '+M.rs+nf0(v)+'"><div class="l">'+M.l[i]+'</div><div class="v">'+cvFmt(v)+'</div><div class="p">'+pc+'</div></div>';
+}
+function cvRow(M,name,t,overall){
+  const [kb,kp,ke,ka]=M.k, variance=t[kp]-t[ke], remain=t[kb]-t[M.k[M.rem]];   // cost: budget - actual, units: budget - earned (as in the Power BI report)
+  return '<div class="cv-row'+(overall?' overall':'')+'"><div class="cv-name">'+esc(name)+'</div>'
+    +cvBox(M,0,t[kb],0)+cvBox(M,1,t[kp],t[kb])+cvBox(M,2,t[ke],t[kb])+cvBox(M,3,t[ka],t[kb])
+    +'<div class="cv-box" title="Variance = Planned \u2212 Earned: '+M.rs+nf0(variance)+'"><div class="l">Variance</div><div class="v'+(variance>0.5?' neg':'')+'">'+cvFmt(variance)+'</div><div class="p">'+(variance>0.5?'behind plan':variance<-0.5?'ahead of plan':'')+'</div></div>'
+    +cvBox(M,4,remain,t[kb])
+    +'</div>';
+}
+/* filter menus (own copy, so the project dashboard filters are not touched) */
+function xPaintFilters(M,d){
+  const bar=document.getElementById(M.filt); if(!bar) return;
+  bar.hidden=!d;
+  bar.querySelectorAll('.xgroup').forEach(g=>{
+    const k=g.dataset.key, s=xSel[k], b=g.querySelector('.fbtn');
+    b.textContent = s.size===0 ? 'All' : (s.size===1 ? [...s][0] : s.size+' selected');
+    b.classList.toggle('on', s.size>0); b.title=b.textContent;
+  });
+  const note=bar.querySelector('.xnote'); if(note) note.textContent = xActive() ? 'Filters apply to Cost View and Units View' : '';
+}
+function xPanel(key,panel,d,rerender){
+  const avail=new Set();
+  d.rows.forEach(r=>{ if(xMatch(d,r,key)) avail.add(d[F[key]][r[IDX[key]]]); });
+  const list=d[F[key]].filter(v=>avail.has(v));
+  let html='<label class="opt"><input type="checkbox" data-all="1" '+(xSel[key].size?'':'checked')+'><span>All</span></label><div class="sep"></div>';
+  list.forEach(v=>{ html+='<label class="opt"><input type="checkbox" value="'+esc(v)+'" '+(xSel[key].has(v)?'checked':'')+'><span>'+esc(v)+'</span></label>'; });
+  panel.innerHTML=html;
+  panel.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+    if(inp.dataset.all) xSel[key].clear(); else if(inp.checked) xSel[key].add(inp.value); else xSel[key].delete(inp.value);
+    xPanel(key,panel,d,rerender); rerender();
+  }));
+}
+function xWire(mode){
+  const M=CV_MODE[mode], bar=document.getElementById(M.filt); if(!bar) return;
+  const rerender = ()=> mode==='cost'?renderCost():renderUnits();
+  bar.querySelectorAll('.xgroup').forEach(g=>{
+    const key=g.dataset.key, btn=g.querySelector('.fbtn'), panel=g.querySelector('.fpanel');
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const d=cvData(); if(!d) return;
+      const open=panel.classList.contains('open');
+      document.querySelectorAll('.fpanel').forEach(p=>p.classList.remove('open'));
+      if(!open){ xPanel(key,panel,d,rerender); panel.classList.add('open'); }
+    });
+    panel.addEventListener('click',e=>e.stopPropagation());
+  });
+  bar.querySelector('[data-xclear]').addEventListener('click',()=>{ for(const k in xSel) xSel[k].clear(); rerender(); });
+}
+function renderSum(mode){
+  const M=CV_MODE[mode], host=document.getElementById(M.host); if(!host) return;
+  const allowed=pid=> !window.__tabAllowed || window.__tabAllowed(pid);
+  document.querySelectorAll('#'+M.sub+' [data-cvp]').forEach(b=>{ b.style.display = allowed(b.dataset.cvp)?'':'none'; });
+  if(!allowed(cvProject)){ const f=Object.keys(DT_PROJ).find(allowed); if(f) cvProject=f; }
+  if(xSelProject!==cvProject){ for(const k in xSel) xSel[k].clear(); xSelProject=cvProject; }   // new project, fresh filters
+  document.querySelectorAll('#'+M.sub+' [data-cvp]').forEach(b=>b.setAttribute('aria-selected', b.dataset.cvp===cvProject?'true':'false'));
+  document.getElementById(M.title).textContent=M.name+' \u2014 '+DT_PROJ[cvProject];
+  const d=cvData();
+  xPaintFilters(M,d);
+  if(!d || !d.rows || !d.rows.length){
+    host.classList.remove('fit','tight'); host.style.height='';
+    host.innerHTML='<div class="card empty-state"><div class="es-icon" aria-hidden="true">\uD83D\uDD17</div><h3>No data connected for '+esc(DT_PROJ[cvProject])+' yet</h3>'
+      +'<p>Connect this project\u2019s Google Sheet on the Database Sync tab. Its summary fills in as soon as the sheet loads.</p></div>';
+    return;
+  }
+  const rows=d.rows.filter(r=>xMatch(d,r,null));
+  const byDept=new Map();
+  rows.forEach(r=>{ const k=d.depts[r[IDX.dept]]; if(!byDept.has(k)) byDept.set(k,blank()); add(byDept.get(k),r); });
+  const all=rows.reduce((t,r)=>add(t,r),blank());
+  const known=CV_CATS.map(c=>c[0]);
+  const extra=[...byDept.keys()].filter(k=>known.indexOf(k)<0)
+    .sort((a,b)=>{const i=ORDER.indexOf(a),j=ORDER.indexOf(b);return (i<0?99:i)-(j<0?99:j)||a.localeCompare(b);});
+  let html='<div class="cv-band">'+M.what+' Summary (Overall)</div>'+cvRow(M,'Overall',all,true)
+    +'<div class="cv-band">Category Wise '+M.what+' Summary</div>';
+  extra.forEach(k=>{ html+=cvRow(M,k,byDept.get(k)); });
+  CV_CATS.forEach(([k,label])=>{ if(byDept.has(k)) html+=cvRow(M,label,byDept.get(k)); });
+  if(!rows.length) html+='<p class="dt-note">No rows match these filters.</p>';
+  host.innerHTML=html;
+  cvFit(host);
+}
+function renderCost(){ renderSum('cost'); }
+function renderUnits(){ renderSum('unit'); }
+/* size the view to the space left under the header so nothing needs scrolling */
+function cvFit(host){
+  if(!host) return;
+  const rows=host.querySelectorAll('.cv-row').length, bands=host.querySelectorAll('.cv-band').length;
+  if(window.innerWidth<=900 || !rows){ host.classList.remove('fit','tight'); host.style.height=''; return; }
+  host.classList.add('fit');
+  const top=host.getBoundingClientRect().top+window.scrollY;
+  const avail=Math.max(360, window.innerHeight-top-46);   // 46 = page bottom padding + gap
+  const fixed=bands*34 + (rows+bands-1)*6;
+  const rowH=Math.min(92, (avail-fixed)/rows);             // few rows (filters on): don't blow the boxes up
+  const H=Math.round(fixed + rowH*rows);
+  host.style.height=H+'px';
+  host.style.setProperty('--cvh', Math.max(34,rowH)+'px');
+  host.classList.toggle('tight', rowH<62);
+}
+window.addEventListener('resize',()=>{
+  if(document.getElementById('view-cost').classList.contains('active')) cvFit(document.getElementById('cv-host'));
+  if(document.getElementById('view-units').classList.contains('active')) cvFit(document.getElementById('uv-host'));
+});
+xWire('cost'); xWire('unit');
+/* ---------- Delayed Activities tab (reads the "Activity Data" tab of each project's sheet) ---------- */
+let daProject='v3';
+const daSort={};
+const DA_GROUPS=['Grey','MEP','Finishing','Other'];
+/* which table an activity goes in: WBS first, then the activity ID, then the activity name */
+const DA_RULES=[
+  ['MEP',/\b(mep|elec\w*|plumb\w*|hvac|fire ?fight\w*|ff|vts|lifts?|elevators?|conduit\w*|wiring|cables?|cable tray\w*|duct\w*|sprinklers?|drainage|water supply|fire alarm|fas|cctv|pa system|earthing|generator|transformer|panels?|dbs?|lighting|light fixtures?|switch\w*|sockets?|pumps?|piping|pipes?|chillers?|ahu|fcu|lpg|diesel|fuel)\b/],
+  ['Finishing',/\b(finish\w*|tiles?|tiling|marble|paint\w*|ceiling|false ceiling|doors?|windows?|epoxy|tuff ?paver\w*|railing\w*|grating|ms work|glazing|acp|cladding|skirting|wpc|louvers?|entrance fixtures?)\b/],
+  ['Grey',/\b(grey|gray|gre|structure|structural|st|steel|rebar|formwork|shuttering|concret\w*|slab|columns?|beams?|brick\w*|masonry|plaster\w*|pcc|rcc|raft|shear walls?|walls?|lintels?|staircase|stairs|excavation|backfill\w*|piles?|piling|capping|footings?|retaining|parapet|water ?proof\w*|boundary)\b/]
+];
+function daGroupOf(a){
+  const tries=[a.wbs, a.id.replace(/[._-]+/g,' '), a.name];
+  for(const t of tries){ if(!t) continue; const x=t.toLowerCase();
+    for(const [g,re] of DA_RULES) if(re.test(x)) return g; }
+  return 'Other';
+}
+const daDays=(a,b)=> Math.round((Date.UTC(+b.slice(0,4),+b.slice(5,7)-1,+b.slice(8,10))-Date.UTC(+a.slice(0,4),+a.slice(5,7)-1,+a.slice(8,10)))/86400000);
+function daFmt(iso){ if(!iso) return '\u2014'; return iso.slice(8,10)+'-'+MON[+iso.slice(5,7)-1]+'-'+iso.slice(2,4); }
+function daStatus(a, asOf){
+  const t=(a.status||'').toLowerCase();
+  if(/complet|^tk_complete|done/.test(t) || a.fA || (a.ap!=null && a.ap>=100)) return ['cp','Completed'];
+  if(/not ?start|^tk_notstart|planned/.test(t)) return ['ns','Not Started'];
+  // P6 gives an unstarted activity a forecast start on/after the data date, so a start before it is an actual start
+  if(/progress|active|^tk_active/.test(t) || a.sA || (a.ap!=null && a.ap>0) || (asOf && a.s && a.s < asOf)) return ['ip','In Progress'];
+  return ['ns','Not Started'];
+}
+const DA_COLS=[
+  {k:'sr',t:'Sr #'},{k:'id',t:'Activity ID',txt:1},{k:'crit',t:'Criticality'},{k:'name',t:'Activity Name',txt:1},
+  {k:'ps',t:'Planned Start',txt:1},{k:'pf',t:'Planned Finish',txt:1},{k:'s',t:'Start',txt:1},{k:'f',t:'Finish',txt:1},
+  {k:'delay',t:'Delay Days'},{k:'st',t:'Activity Status',txt:1},{k:'pp',t:'Planned Progress'},{k:'ap',t:'Actual Progress'},{k:'reason',t:'Reason',txt:1}];
+function daTable(g,list,hasReason){
+  const st=daSort[g]||(daSort[g]={k:'default',dir:-1});
+  const val=(a,k)=> k==='crit'?(a.crit?1:0): k==='st'?a._st[1]: k==='delay'?a.delay: (a[k]==null?-1:a[k]);
+  list.sort((a,b)=>{
+    if(st.k==='default') return (b.crit-a.crit)||(b.delay-a.delay)||a.id.localeCompare(b.id);
+    const x=val(a,st.k), y=val(b,st.k);
+    return st.dir*((typeof x==='string'||typeof y==='string') ? String(x).localeCompare(String(y)) : (x-y)) || (b.delay-a.delay);
+  });
+  const cols=DA_COLS.filter(c=>c.k!=='reason'||hasReason);
+  const ar=k=> st.k===k ? '<span class="ar">'+(st.dir<0?'\u25BC':'\u25B2')+'</span>' : '';
+  const head='<tr>'+cols.map(c=>'<th'+(c.k==='sr'?'':' data-dasort="'+c.k+'"')+(c.k==='name'?' style="text-align:left!important"':'')+'>'+c.t+ar(c.k)+'</th>').join('')+'</tr>';
+  const pc=v=> v==null?'\u2014':Math.round(v)+' %';
+  const body = list.length ? list.map((a,i)=>{
+    const lv=a.delay>=30?'':a.delay>=15?' d2':' d1';
+    const cells={sr:'<td class="c">'+(i+1)+'</td>', id:'<td style="text-align:left">'+esc(a.id)+'</td>',
+      crit:'<td class="c">'+(a.crit?'<span class="da-crit">Critical</span>':'<span class="da-crit" style="font-weight:400">-</span>')+'</td>',
+      name:'<td class="l">'+esc(a.name)+'</td>', ps:'<td class="c">'+daFmt(a.ps)+'</td>', pf:'<td class="c">'+daFmt(a.pf)+'</td>',
+      s:'<td class="c">'+daFmt(a.s)+(a.sA?' <small title="Actual">A</small>':'')+'</td>', f:'<td class="c">'+daFmt(a.f)+(a.fA?' <small title="Actual">A</small>':'')+'</td>',
+      delay:'<td class="da-delay'+lv+'">'+a.delay+'</td>', st:'<td class="c"><span class="da-st '+a._st[0]+'">'+a._st[1]+'</span></td>',
+      pp:'<td class="c">'+pc(a.pp)+'</td>', ap:'<td class="c">'+pc(a.ap)+'</td>', reason:'<td class="l">'+esc(a.reason||'')+'</td>'};
+    return '<tr>'+cols.map(c=>cells[c.k]).join('')+'</tr>';
+  }).join('') : '<tr class="da-empty"><td colspan="'+cols.length+'">No delayed activities here \u2714</td></tr>';
+  return '<div class="card dt-card"><div class="dt-scroll"><table class="dt-tbl da-tbl" data-grp="'+g+'"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div></div>';
+}
+function daCompute(d,asOf,o){
+  o=o||{}; const onlyCrit=!!o.onlyCrit, withDone=!!o.withDone, q=o.q||'';
+  const groups={Grey:[],MEP:[],Finishing:[],Other:[]};
+  let total=0, crit=0;
+  d.acts.forEach(a=>{
+    /* Delayed = as of the data date the activity should already have started / finished (planned dates)
+       but has not. Future activities that are only forecast to slip are NOT delayed yet. */
+    if(!a.pf) return;
+    const st=daStatus(a, asOf);
+    const finished = st[0]==='cp', started = finished || st[0]==='ip';
+    const finishLate = !finished && a.pf < asOf;                 // planned finish has passed, still open
+    const startLate  = !started && a.ps && a.ps < asOf;          // planned start has passed, not started
+    const doneLate   = finished && a.f && a.f > a.pf;            // finished, but after the planned finish
+    if(!(finishLate || startLate || (withDone && doneLate))) return;
+    let delay;
+    if(finishLate || doneLate) delay = a.f && a.f > a.pf ? daDays(a.pf,a.f) : daDays(a.pf,asOf);   // Finish - Planned Finish
+    else delay = a.s && a.s > a.ps ? daDays(a.ps,a.s) : daDays(a.ps,asOf);                          // start delay
+    if(delay<=0) return;
+    if(onlyCrit && !a.crit) return;
+    if(q && (a.id+' '+a.name).toLowerCase().indexOf(q)<0) return;
+    const x=Object.assign({},a,{delay:delay,_st:st});
+    groups[daGroupOf(a)].push(x); total++; if(a.crit) crit++;
+  });
+  return {groups:groups,total:total,crit:crit};
+}
+function renderDelay(){
+  const host=document.getElementById('da-host'); if(!host) return;
+  const allowed=pid=> !window.__tabAllowed || window.__tabAllowed(pid);
+  document.querySelectorAll('#da-sub [data-dap]').forEach(b=>{ b.style.display = allowed(b.dataset.dap)?'':'none'; });
+  if(!allowed(daProject)){ const f=Object.keys(DT_PROJ).find(allowed); if(f) daProject=f; }
+  document.querySelectorAll('#da-sub [data-dap]').forEach(b=>b.setAttribute('aria-selected', b.dataset.dap===daProject?'true':'false'));
+  document.getElementById('da-title').textContent='Delayed Activities \u2014 '+DT_PROJ[daProject];
+  const it=(window.__execList?window.__execList():[]).find(x=>x.pid===daProject), d=it&&it.data;
+  const chips=document.getElementById('da-chips'); chips.innerHTML='';
+  const bar=document.getElementById('da-bar');
+  const msg=(ic,h,p)=>{ bar.style.display='none'; host.innerHTML='<div class="card empty-state"><div class="es-icon" aria-hidden="true">'+ic+'</div><h3>'+h+'</h3><p>'+p+'</p></div>'; };
+  if(!d) return msg('\uD83D\uDD17','No data connected for '+esc(DT_PROJ[daProject])+' yet','Connect this project\u2019s Google Sheet on the Database Sync tab.');
+  if(d.acts===undefined) return msg('\u23F3','Activity list not loaded yet','This tab reads the <b>Activity Data</b> tab of the project\u2019s Google Sheet. It fills in once the sheet has loaded (press Refresh on the Database Sync tab if the dashboard is offline).');
+  if(!d.acts || !d.acts.length) return msg('\uD83D\uDCCB','No activities found in the Activity Data tab','Add a tab named <b>Activity Data</b> (the P6 activity export) with at least: Activity ID, Activity Name, Planned Start, Planned Finish, Start, Finish. Optional: Critical (or Total Float), Activity Status, Planned % / Activity % Complete, WBS, Reason.');
+  bar.style.display='';
+  const q=document.getElementById('da-q').value.trim().toLowerCase();
+  const onlyCrit=document.getElementById('da-crit').checked, withDone=document.getElementById('da-done').checked;
+  /* "as of" date: the P6 data date if the export has one, otherwise today (can be changed in the box) */
+  const asofEl=document.getElementById('da-asof');
+  const t0=new Date(), todayISO=t0.getFullYear()+'-'+String(t0.getMonth()+1).padStart(2,'0')+'-'+String(t0.getDate()).padStart(2,'0');
+  if(asofEl.dataset.pid!==daProject){ asofEl.value=d.acts.dataDate||todayISO; asofEl.dataset.pid=daProject; }
+  const asOf=asofEl.value||d.acts.dataDate||todayISO;
+  const hasReason=d.acts.some(a=>a.reason);
+  const R=daCompute(d,asOf,{onlyCrit:onlyCrit,withDone:withDone,q:q});
+  const groups=R.groups, total=R.total, crit=R.crit;
+  chips.innerHTML='<span class="da-chip">Delayed: <b>'+total+'</b></span><span class="da-chip">Critical: <b>'+crit+'</b></span>';
+  let html='';
+  DA_GROUPS.forEach(g=>{
+    if(g==='Other' && !groups.Other.length) return;
+    html+='<div class="da-sec" data-grp="'+g+'"><div class="da-pill">'+g+'<small>'+groups[g].length+' delayed</small></div>'
+      +'<span class="da-actions"><button class="btn ghost" type="button" data-daprint="'+g+'">\uD83D\uDDA8 Print</button>'
+      +'<button class="btn ghost" type="button" data-dapdf="'+g+'">\u2B07 PDF</button></span>'
+      +daTable(g,groups[g],hasReason)+'</div>';
+  });
+  html+='<p class="dt-note">Listed: activities whose planned start or planned finish is before the \u201cAs of\u201d date but which have not started / finished yet. Delay Days = Finish \u2212 Planned Finish (start delay for activities that have not started). Activities planned after the \u201cAs of\u201d date are not counted, even if P6 forecasts them late. Click a column heading to sort.</p>';
+  host.innerHTML=html;
+  daLast={asOf:asOf, total:total, crit:crit, q:q, onlyCrit:onlyCrit, withDone:withDone};
+  host.querySelectorAll('th[data-dasort]').forEach(th=>th.addEventListener('click',()=>{
+    const g=th.closest('table').dataset.grp, k=th.dataset.dasort, st=daSort[g];
+    if(st.k===k) st.dir=-st.dir; else { st.k=k; st.dir = ['id','name','st','reason'].indexOf(k)>=0?1:-1; }
+    renderDelay();
+  }));
+}
+document.querySelectorAll('#da-sub [data-dap]').forEach(b=>b.addEventListener('click',()=>{
+  if(window.__tabAllowed && !window.__tabAllowed(b.dataset.dap)){ if(window.__tabDenied) window.__tabDenied(); return; }
+  daProject=b.dataset.dap; renderDelay();
+}));
+['da-q','da-crit','da-done','da-asof'].forEach(id=>document.getElementById(id).addEventListener('input',renderDelay));
+document.getElementById('da-asof').addEventListener('change',renderDelay);
+/* ---------- print / save as PDF (all groups or one group) ---------- */
+let daLast=null;
+function daInfoLine(which){
+  const L=daLast||{};
+  const f=[]; if(L.onlyCrit) f.push('critical only'); if(L.withDone) f.push('incl. completed late'); if(L.q) f.push('search: "'+L.q+'"');
+  return (which==='all'?'All categories':which)+' \u00B7 As of '+daFmt(L.asOf||'')+' \u00B7 Printed '+daFmt(new Date().toISOString().slice(0,10))+(f.length?' \u00B7 Filter: '+f.join(', '):'');
+}
+function daPrint(which){
+  const secs=[...document.querySelectorAll('#da-host .da-sec')];
+  let first=true;
+  secs.forEach(sec=>{
+    const skip = which!=='all' && sec.dataset.grp!==which;
+    sec.classList.toggle('da-skip', skip);
+    sec.classList.toggle('da-first', !skip && first);
+    if(!skip) first=false;
+  });
+  document.getElementById('da-print-info').textContent=daInfoLine(which);
+  const oldTitle=document.title;
+  document.title='Delayed Activities - '+DT_PROJ[daProject]+(which==='all'?'':' - '+which);
+  document.body.classList.add('da-printing');
+  const done=()=>{ document.body.classList.remove('da-printing'); secs.forEach(x=>x.classList.remove('da-skip','da-first')); document.title=oldTitle; window.removeEventListener('afterprint',done); };
+  window.addEventListener('afterprint',done);
+  setTimeout(()=>{ try{ window.print(); }catch(e){ alert('Printing is blocked here. Open the dashboard in its own browser tab and try again.'); } setTimeout(done,1500); },50);
+}
+/* PDF: jsPDF + AutoTable, loaded only when first needed */
+let daPdfLib=null;
+function daLoadScript(src){ return new Promise((ok,bad)=>{ const x=document.createElement('script'); x.src=src; x.onload=ok; x.onerror=()=>bad(new Error('could not load '+src)); document.head.appendChild(x); }); }
+function daLoadPdf(){
+  if(!daPdfLib) daPdfLib=daLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+    .then(()=>daLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'))
+    .catch(e=>{ daPdfLib=null; throw e; });
+  return daPdfLib;
+}
+async function daPdf(which, btn){
+  const old=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Preparing\u2026'; }
+  try{
+    await daLoadPdf();
+    const doc=new window.jspdf.jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+    const W=doc.internal.pageSize.getWidth();
+    const secs=[...document.querySelectorAll('#da-host .da-sec')].filter(sec=>which==='all'||sec.dataset.grp===which);
+    secs.forEach((sec,si)=>{
+      if(si) doc.addPage();
+      doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(34,72,75);
+      doc.text('Delayed Activities \u2014 '+DT_PROJ[daProject], 30, 34);
+      doc.setFontSize(12); doc.setTextColor(63,107,112);
+      doc.text(sec.dataset.grp+'  ('+sec.querySelectorAll('tbody tr:not(.da-empty)').length+' delayed)', 30, 54);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(110,122,120);
+      doc.text(daInfoLine(which==='all'?sec.dataset.grp:which).replace(/\u00B7/g,'|'), 30, 68);
+      const tbl=sec.querySelector('table');
+      const head=[[...tbl.querySelectorAll('thead th')].map(th=>th.textContent.replace(/[\u25B2\u25BC]/g,'').trim())];
+      const body=[...tbl.querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(td=>td.textContent.replace(/\s+A$/,' A').replace(/[\u2714\u2713]/g,'').trim()));
+      const dCol=head[0].indexOf('Delay Days'), nCol=head[0].indexOf('Activity Name'), cCol=head[0].indexOf('Criticality'), rCol=head[0].indexOf('Reason');
+      doc.autoTable({
+        head:head, body:body, startY:78, margin:{left:30,right:30},
+        styles:{fontSize:8, cellPadding:3.5, valign:'middle', halign:'center', lineColor:[225,220,208], lineWidth:0.4},
+        headStyles:{fillColor:[246,196,103], textColor:[30,42,43], fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[251,250,246]},
+        columnStyles:Object.assign({}, nCol>=0?{[nCol]:{halign:'left',cellWidth:170}}:{}, rCol>=0?{[rCol]:{halign:'left',cellWidth:90}}:{}, {1:{halign:'left'}}),
+        didParseCell:c=>{
+          if(c.section!=='body') return;
+          if(c.column.index===dCol && c.cell.raw!=='' && !isNaN(+c.cell.raw)){
+            const v=+c.cell.raw; c.cell.styles.fillColor = v>=30?[242,85,85]: v>=15?[245,138,91]:[247,178,103];
+            c.cell.styles.textColor = v>=15?[255,255,255]:[58,42,16]; c.cell.styles.fontStyle='bold';
+          }
+          if(c.column.index===cCol && c.cell.raw==='Critical'){ c.cell.styles.textColor=[208,65,58]; c.cell.styles.fontStyle='bold'; }
+          if(body.length===1 && body[0].length===1){ c.cell.colSpan=head[0].length; }
+        },
+        didDrawPage:()=>{ doc.setFontSize(8); doc.setTextColor(150); doc.text('The Vertical \u2014 Project Control Dashboard', 30, doc.internal.pageSize.getHeight()-14);
+          doc.text('Page '+doc.internal.getNumberOfPages(), W-30, doc.internal.pageSize.getHeight()-14, {align:'right'}); }
+      });
+    });
+    const fn=('Delayed_Activities_'+DT_PROJ[daProject]+'_'+(which==='all'?'All':which)+'_'+((daLast&&daLast.asOf)||'')).replace(/[^\w-]+/g,'_')+'.pdf';
+    doc.save(fn);
+  }catch(e){
+    if(confirm('The PDF maker could not load ('+e.message+').\n\nOpen the print window instead? Choose "Save as PDF" as the printer there.')) daPrint(which);
+  }finally{ if(btn){ btn.disabled=false; btn.textContent=old; } }
+}
+/* =====================================================================
+   REFRESH LOGS + PDF BACKUP TO GOOGLE DRIVE
+   Manual refresh -> PDF of the project's reports -> Apps Script web app
+   (saves the PDF in Drive + a row in its log sheet) -> Refresh Logs tab.
+   ===================================================================== */
+const LG_LS={get:k=>{try{return localStorage.getItem(k)||'';}catch(e){return '';}}, set:(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}}};
+const lgUrl=()=>LG_LS.get('lgUrl').trim(), lgKey=()=>LG_LS.get('lgKey'), lgOn=()=>LG_LS.get('lgOn')!=='0';
+function lgToast(html,bad,ms){
+  let t=document.getElementById('lg-toast'); if(!t){ t=document.createElement('div'); t.id='lg-toast'; document.body.appendChild(t); }
+  t.innerHTML=html; t.className=bad?'bad':''; t.style.display='block';
+  clearTimeout(t._h); if(ms) t._h=setTimeout(()=>{ t.style.display='none'; },ms);
+}
+function lgNow(){ const d=new Date(); return {iso:d.toISOString(), text:d.getDate().toString().padStart(2,'0')+'-'+MON[d.getMonth()]+'-'+d.getFullYear()+' '+d.toTimeString().slice(0,5)}; }
+function lgUser(){ try{ return sessionStorage.getItem('pcd_user')||''; }catch(e){ return ''; } }
+
+/* ---- the PDF report ---- */
+async function buildReportPdf(pid, meta){
+  await daLoadPdf();
+  const it=(window.__execList?window.__execList():[]).find(x=>x.pid===pid), d=it&&it.data;
+  if(!d || !d.rows || !d.rows.length) throw new Error('no data to report');
+  const name=(it&&it.name)||DT_PROJ[pid]||pid;
+  const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight();
+  const head=(title)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(34,72,75); doc.text(name+' \u2014 '+title,30,34);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(110,122,120);
+    doc.text('Data refreshed '+meta.when+(meta.user?'  |  by '+meta.user:'')+'  |  '+meta.state,30,50); };
+  const foot=()=>{ doc.setFontSize(8); doc.setTextColor(150); doc.text('The Vertical \u2014 Project Control Dashboard  |  refresh report',30,H-14);
+    doc.text('Page '+doc.internal.getNumberOfPages(),W-30,H-14,{align:'right'}); };
+  const T=(o)=>doc.autoTable(Object.assign({margin:{left:30,right:30,bottom:30},styles:{fontSize:8,cellPadding:3.5,halign:'right',lineColor:[225,220,208],lineWidth:0.4},
+    headStyles:{fillColor:[246,196,103],textColor:[30,42,43],fontStyle:'bold',halign:'center'},alternateRowStyles:{fillColor:[251,250,246]},
+    columnStyles:{0:{halign:'left',fontStyle:'bold'}},didDrawPage:foot},o));
+  const nextY=(gap)=>{ const y=(doc.lastAutoTable?doc.lastAutoTable.finalY:60)+(gap||22); if(y>H-90){ doc.addPage(); head(meta.section||''); return 70; } return y; };
+  const sub=(txt,y)=>{ doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(63,107,112); doc.text(txt,30,y); };
+
+  /* page 1: KPIs + S-curve */
+  meta.section='Dashboard report'; head('Dashboard report');
+  const t=d.rows.reduce((a,r)=>add(a,r),blank());
+  const pp=t.bcost?t.pcost/t.bcost*100:0, ep=t.bcost?t.ecost/t.bcost*100:0, spi=t.pcost?t.ecost/t.pcost:0, cpi=t.acost?t.ecost/t.acost:0;
+  const dt=d.dates||{}, dly=(dt.plannedEnd&&dt.expectedEnd)?daDays(dt.plannedEnd,dt.expectedEnd):null;
+  const kp=[['Planned progress',pp.toFixed(2)+'%'],['Earned progress',ep.toFixed(2)+'%'],['SPI',spi.toFixed(2)],['CPI',t.acost?cpi.toFixed(2):'\u2014'],
+    ['Planned end',dt.plannedEnd?daFmt(dt.plannedEnd):'\u2014'],['Expected end',dt.expectedEnd?daFmt(dt.expectedEnd):'\u2014'],['Delay (days)',dly==null?'\u2014':String(dly)]];
+  const bw=(W-60-6*8)/7;
+  kp.forEach((k,i)=>{ const x=30+i*(bw+8), y=64; doc.setFillColor(238,244,243); doc.setDrawColor(201,217,214); doc.roundedRect(x,y,bw,52,6,6,'FD');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,100,98); doc.text(k[0],x+bw/2,y+16,{align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(34,72,75); doc.text(k[1],x+bw/2,y+38,{align:'center'}); });
+  const sc=d.scurve||{labels:[]};
+  if(sc.labels && sc.labels.length>1){
+    const x0=60,x1=W-40,y0=H-70,y1=150, n=sc.labels.length;
+    sub('S-curve (cumulative % of budget)',140);
+    doc.setDrawColor(230); doc.setLineWidth(0.5); doc.setFontSize(7.5); doc.setTextColor(120); doc.setFont('helvetica','normal');
+    [0,25,50,75,100].forEach(v=>{ const y=y0-(y0-y1)*v/100; doc.line(x0,y,x1,y); doc.text(v+'%',x0-6,y+2.5,{align:'right'}); });
+    const X=i=>x0+(x1-x0)*i/(n-1), Y=v=>y0-(y0-y1)*Math.max(0,Math.min(100,v))/100;
+    const step=Math.max(1,Math.ceil(n/14)); sc.labels.forEach((l,i)=>{ if(i%step===0||i===n-1) doc.text(l,X(i),y0+12,{align:'center'}); });
+    const line=(arr,c)=>{ doc.setDrawColor(c[0],c[1],c[2]); doc.setLineWidth(1.8); let p=null;
+      (arr||[]).forEach((v,i)=>{ if(v==null){ p=null; return; } const q=[X(i),Y(v)]; if(p) doc.line(p[0],p[1],q[0],q[1]); p=q; }); };
+    line(sc.planned,[63,107,112]); line(sc.actual,[214,169,60]); line(sc.earned,[160,82,45]);
+    [['Planned',[63,107,112]],['Actual',[214,169,60]],['Earned',[160,82,45]]].forEach((l,i)=>{ const lx=W-250+i*75; doc.setFillColor(l[1][0],l[1][1],l[1][2]); doc.rect(lx,134,10,6,'F');
+      doc.setFontSize(8.5); doc.setTextColor(60); doc.text(l[0],lx+14,140); });
+  }
+  foot();
+
+  /* page 2: cost + units summary (same as the Cost View / Units View tabs) */
+  doc.addPage(); meta.section='Cost & units summary'; head('Cost & units summary');
+  const byDept=new Map(); d.rows.forEach(r=>{ const k=d.depts[r[IDX.dept]]; if(!byDept.has(k)) byDept.set(k,blank()); add(byDept.get(k),r); });
+  const cats=[['Overall',t]]; const known=CV_CATS.map(c=>c[0]);
+  [...byDept.keys()].filter(k=>known.indexOf(k)<0).forEach(k=>cats.push([k,byDept.get(k)]));
+  CV_CATS.forEach(([k,l])=>{ if(byDept.has(k)) cats.push([l,byDept.get(k)]); });
+  sub('Cost summary (Rs)',74);
+  T({startY:80, head:[['Category','Budgeted','Planned','Earned','Actual','Variance (Planned - Earned)','Remaining (Budget - Actual)']],
+     body:cats.map(([l,x])=>[l,nf0(x.bcost),nf0(x.pcost),nf0(x.ecost),nf0(x.acost),nf0(x.pcost-x.ecost),nf0(x.bcost-x.acost)]),
+     didParseCell:c=>{ if(c.section==='body'&&c.row.index===0){ c.cell.styles.fillColor=[220,231,230]; c.cell.styles.fontStyle='bold'; } }});
+  let y=nextY(); sub('Units summary',y);
+  T({startY:y+6, head:[['Category','Budgeted','Planned','Earned','Actual','Variance (Planned - Earned)','Remaining (Budget - Earned)']],
+     body:cats.map(([l,x])=>[l,nf0(x.bqty),nf0(x.pqty),nf0(x.eqty),nf0(x.aqty),nf0(x.pqty-x.eqty),nf0(x.bqty-x.eqty)]),
+     didParseCell:c=>{ if(c.section==='body'&&c.row.index===0){ c.cell.styles.fillColor=[220,231,230]; c.cell.styles.fontStyle='bold'; } }});
+
+  /* project detail (Grey / MEP / Finishing by major item) */
+  doc.addPage(); meta.section='Project detail'; head('Project detail'); doc.lastAutoTable=null; let first=true;
+  dtGroups(d).forEach(g=>{
+    const rows=dtAgg(d,g); if(!rows.length) return;
+    rows.sort((a,b)=>b.ecost-a.ecost);
+    const tot=rows.reduce((a,r)=>{ ['bcost','pcost','ecost','acost','scost','bqty','pqty','eqty','aqty','squ'].forEach(k=>a[k]=(a[k]||0)+r[k]); return a; },{});
+    y=first?74:nextY(); first=false; sub(g.name,y);
+    const line=r=>[r.name,nf0(r.bcost),nf2(r.pcost),nf0(r.ecost),nf0(r.acost),nf0(r.scost),nf0(r.bqty),nf0(r.pqty),nf0(r.eqty),nf0(r.aqty),nf0(r.squ)];
+    T({startY:y+6, head:[[g.name,'Budgeted Cost','Planned Cost','Earned Value','Actual Cost','Saving Cost','Budgeted Units','Planned Units','Earned Units','Actual Units','Saved Units']],
+       body:rows.map(line), foot:[line(Object.assign({name:'Total'},tot))],
+       footStyles:{fillColor:[243,239,228],textColor:[30,42,43],fontStyle:'bold',halign:'right'},
+       didParseCell:c=>{ if(c.section==='body'&&(c.column.index===5||c.column.index===10)){ const v=parseFloat(String(c.cell.raw).replace(/,/g,'')); if(v<0) c.cell.styles.textColor=[208,65,58]; else if(v>0) c.cell.styles.textColor=[46,139,87]; } }});
+  });
+
+  /* delayed activities */
+  doc.addPage(); meta.section='Delayed activities'; head('Delayed activities'); doc.lastAutoTable=null;
+  if(d.acts && d.acts.length){
+    const t0=new Date(), today=t0.getFullYear()+'-'+String(t0.getMonth()+1).padStart(2,'0')+'-'+String(t0.getDate()).padStart(2,'0');
+    const asOf=d.acts.dataDate||today, R=daCompute(d,asOf,{});
+    doc.setFontSize(9); doc.setTextColor(90); doc.text('As of '+daFmt(asOf)+'  |  delayed: '+R.total+'  |  critical: '+R.crit,30,68);
+    first=true;
+    DA_GROUPS.forEach(g=>{
+      const L=R.groups[g]; if(g==='Other'&&!L.length) return;
+      L.sort((a,b)=>(b.crit-a.crit)||(b.delay-a.delay));
+      y=first?84:nextY(); first=false; sub(g+'  ('+L.length+' delayed)',y);
+      T({startY:y+6, styles:{fontSize:7.5,cellPadding:3,halign:'center',lineColor:[225,220,208],lineWidth:0.4},
+         columnStyles:{1:{halign:'left'},3:{halign:'left',cellWidth:180}},
+         head:[['#','Activity ID','Criticality','Activity Name','Planned Start','Planned Finish','Start','Finish','Delay Days','Status','Actual %']],
+         body:L.length?L.map((a,i)=>[i+1,a.id,a.crit?'Critical':'-',a.name,daFmt(a.ps),daFmt(a.pf),daFmt(a.s),daFmt(a.f),a.delay,a._st[1],a.ap==null?'\u2014':Math.round(a.ap)+'%'])
+                      :[[{content:'No delayed activities',colSpan:11,styles:{halign:'center',textColor:[120,120,120]}}]],
+         didParseCell:c=>{ if(c.section!=='body') return;
+           if(c.column.index===8 && typeof c.cell.raw==='number'){ const v=c.cell.raw; c.cell.styles.fillColor=v>=30?[242,85,85]:v>=15?[245,138,91]:[247,178,103]; c.cell.styles.textColor=v>=15?[255,255,255]:[58,42,16]; c.cell.styles.fontStyle='bold'; }
+           if(c.column.index===2 && c.cell.raw==='Critical'){ c.cell.styles.textColor=[208,65,58]; c.cell.styles.fontStyle='bold'; } }});
+    });
+  } else {
+    doc.setFontSize(10); doc.setTextColor(120); doc.text('Activity Data tab not loaded for this project, so no delayed-activity list at this refresh.',30,80); foot();
+  }
+  const stamp=meta.iso.slice(0,16).replace('T','_').replace(':','-');
+  return {doc:doc, fileName:(name+'_Refresh_'+stamp).replace(/[^\w-]+/g,'_')+'.pdf'};
+}
+
+/* ---- talk to the Apps Script web app ---- */
+async function lgPost(payload){
+  const r=await fetch(lgUrl(),{method:'POST',body:JSON.stringify(Object.assign({key:lgKey()},payload))});   // text/plain: no CORS pre-flight
+  const j=await r.json();
+  if(!j.ok) throw new Error(j.error||'the script refused the request');
+  return j;
+}
+function lgJsonp(params){
+  return new Promise((ok,bad)=>{
+    const cb='lgcb_'+Date.now()+Math.floor(Math.random()*1e6), sc=document.createElement('script');
+    const tm=setTimeout(()=>{ clean(); bad(new Error('no answer from the script (check the URL and that access is "Anyone")')); },20000);
+    function clean(){ clearTimeout(tm); try{ delete window[cb]; }catch(e){ window[cb]=undefined; } sc.remove(); }
+    window[cb]=j=>{ clean(); j&&j.ok?ok(j):bad(new Error((j&&j.error)||'bad answer')); };
+    const q=Object.assign({key:lgKey(),callback:cb},params);
+    sc.src=lgUrl()+(lgUrl().indexOf('?')<0?'?':'&')+Object.keys(q).map(k=>k+'='+encodeURIComponent(q[k])).join('&');
+    sc.onerror=()=>{ clean(); bad(new Error('could not reach the script')); };
+    document.head.appendChild(sc);
+  });
+}
+/* local copy of the log (this browser) - used when Drive is not set up or an upload fails */
+function lgLocal(){ try{ return JSON.parse(localStorage.getItem('lgLocal')||'[]'); }catch(e){ return []; } }
+function lgLocalAdd(e){ const a=lgLocal(); a.unshift(e); LG_LS.set('lgLocal',JSON.stringify(a.slice(0,300))); }
+
+window.__onManualRefresh=async function(pid, info){
+  if(!lgOn()) return;
+  const now=lgNow(), user=lgUser();
+  const entry={time:now.iso, project:info.name||DT_PROJ[pid]||pid, pid:pid, user:user, rows:info.rows, status:info.state, notes:info.notes, fileName:'', url:'', where:'local'};
+  let built=null;
+  lgToast('\u23F3 '+esc(entry.project)+' refreshed \u2014 making the PDF report\u2026');
+  try{ built=await buildReportPdf(pid,{when:now.text,iso:now.iso,user:user,state:info.state}); entry.fileName=built.fileName; }
+  catch(e){ entry.notes=(entry.notes?entry.notes+' | ':'')+'PDF: '+e.message; }
+  if(lgUrl()){
+    try{
+      lgToast('\u23F3 Saving '+esc(entry.fileName||'log')+' to Google Drive\u2026');
+      const j=await lgPost({action:'log', time:entry.time, project:entry.project, pid:pid, user:user, rows:entry.rows, status:entry.status, notes:entry.notes,
+        fileName:entry.fileName, pdf: built ? built.doc.output('datauristring').split(',')[1] : ''});
+      entry.url=j.url||''; entry.where='drive';
+      lgToast('\u2714 '+esc(entry.project)+' \u2014 report saved to Google Drive'+(entry.url?' &middot; <a href="'+esc(entry.url)+'" target="_blank" rel="noopener">open PDF</a>':''),false,9000);
+    }catch(e){
+      entry.notes=(entry.notes?entry.notes+' | ':'')+'Drive upload failed: '+e.message;
+      if(built) built.doc.save(built.fileName);
+      lgToast('\u26A0 Could not save to Google Drive ('+esc(e.message)+'). The PDF was downloaded to this computer instead.',true,12000);
+    }
+  } else {
+    if(built) built.doc.save(built.fileName);
+    lgToast('\u2714 Refresh logged. Google Drive backup is not set up yet (Database Sync tab), so the PDF was downloaded to this computer.',false,10000);
+  }
+  if(entry.where!=='drive') lgLocalAdd(entry);
+  if(document.getElementById('view-logs').classList.contains('active')) renderLogs();
+};
+
+/* ---- Refresh Logs tab ---- */
+let lgCache=null;
+async function renderLogs(force){
+  const host=document.getElementById('lg-host'), src=document.getElementById('lg-src'); if(!host) return;
+  const pf=document.getElementById('lg-proj').value;
+  let server=[], err='';
+  if(lgUrl()){
+    if(force||!lgCache){ host.innerHTML='<p class="dt-note">Loading the log from Google Drive\u2026</p>';
+      try{ lgCache=(await lgJsonp({action:'list'})).logs||[]; }catch(e){ err=e.message; lgCache=null; } }
+    server=lgCache||[];
+  }
+  const local=lgLocal().map(x=>Object.assign({},x,{_local:1}));
+  src.textContent = lgUrl() ? (err?'Google Drive log could not be read: '+err:'Source: Google Drive log ('+server.length+' entries)'+(local.length?' + '+local.length+' only on this computer':''))
+                            : 'Google Drive backup not set up \u2014 showing the log saved in this browser. Set it up on the Database Sync tab.';
+  let all=server.concat(local).filter(x=>!pf||x.pid===pf).sort((a,b)=>String(b.time).localeCompare(String(a.time)));
+  if(!all.length){ host.innerHTML='<div class="card empty-state"><div class="es-icon" aria-hidden="true">\uD83D\uDDC2</div><h3>No refreshes logged yet</h3><p>Press <b>Refresh</b> for a project on the Database Sync tab (or &ldquo;Refresh all projects &amp; save reports&rdquo;). Each refresh is listed here with a link to its PDF report.</p></div>'; return; }
+  const fmtT=iso=>{ const d=new Date(iso); if(isNaN(d)) return esc(iso); return String(d.getDate()).padStart(2,'0')+'-'+MON[d.getMonth()]+'-'+d.getFullYear()+' &nbsp;'+d.toTimeString().slice(0,5); };
+  const cls=st=>/live/i.test(st)?'lg-ok':/partly|offline|built-in/i.test(st)?'lg-warn':'lg-bad';
+  host.innerHTML='<div class="card dt-card"><div class="dt-scroll" style="max-height:none"><table class="dt-tbl lg-tbl"><thead><tr>'
+    +'<th>#</th><th>Date &amp; time</th><th>Project</th><th>Refreshed by</th><th>Rows</th><th>Status</th><th style="text-align:left!important">Report (PDF)</th><th style="text-align:left!important">Notes</th></tr></thead><tbody>'
+    +all.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+fmtT(x.time)+'</td><td class="l">'+esc(x.project||'')+'</td><td>'+esc(x.user||'\u2014')+'</td><td>'+(x.rows?nf0(+x.rows):'\u2014')+'</td>'
+      +'<td class="'+cls(x.status||'')+'">'+esc(x.status||'')+'</td>'
+      +'<td class="l">'+(x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">\uD83D\uDCC4 '+esc(x.fileName||'Open PDF')+'</a>':(x._local?'<span class="lg-warn">'+(x.fileName?'Downloaded to that computer: '+esc(x.fileName):'no PDF')+'</span>':'\u2014'))+'</td>'
+      +'<td class="l" style="white-space:normal;max-width:320px;color:var(--muted)">'+esc(x.notes||'')+'</td></tr>').join('')
+    +'</tbody></table></div></div>';
+}
+document.getElementById('lg-proj').addEventListener('change',()=>renderLogs());
+document.getElementById('lg-reload').addEventListener('click',()=>renderLogs(true));
+
+/* ---- settings card on Database Sync ---- */
+(function(){
+  const u=document.getElementById('lg-url'), k=document.getElementById('lg-key'), on=document.getElementById('lg-on'), st=document.getElementById('lg-status');
+  u.value=lgUrl(); k.value=lgKey(); on.checked=lgOn();
+  const msg=(t,ok)=>{ st.style.color=ok?'var(--good)':'#9C5B3C'; st.textContent=t; };
+  msg(lgUrl()?'Google Drive backup is set up.':'Not set up yet \u2014 refreshes are logged in this browser only and PDFs are downloaded to this computer.', !!lgUrl());
+  document.getElementById('lg-save').addEventListener('click',()=>{
+    const v=u.value.trim();
+    if(v && !/^https:\/\/script\.google(usercontent)?\.com\//.test(v)){ msg('That does not look like an Apps Script web app URL (it should start with https://script.google.com/macros/s/ and end with /exec).'); return; }
+    LG_LS.set('lgUrl',v); LG_LS.set('lgKey',k.value); lgCache=null; msg(v?'Saved. Press "Test connection" to check it.':'Removed \u2014 logs stay in this browser only.', !!v);
+  });
+  document.getElementById('lg-test').addEventListener('click',async()=>{
+    if(!lgUrl()){ msg('Paste the web app URL and press Save first.'); return; }
+    msg('Testing\u2026',true);
+    try{ const j=await lgJsonp({action:'ping'}); msg('\u2714 Connected. Reports go to Drive folder "'+(j.folder||'')+'"'+(j.sheetUrl?' \u2014 log sheet ready.':''),true); }
+    catch(e){
+      msg('\u2716 '+e.message);
+      const t=lgUrl()+(lgUrl().indexOf('?')<0?'?':'&')+'action=ping&key='+encodeURIComponent(lgKey());
+      st.insertAdjacentHTML('beforeend',' &mdash; <a href="'+esc(t)+'" target="_blank" rel="noopener">open the script link directly</a> to see what Google says '
+        +'(it should show <code>{"ok":true,...}</code>).');
+    }
+  });
+  on.addEventListener('change',()=>LG_LS.set('lgOn',on.checked?'1':'0'));
+  document.getElementById('lg-refresh-all').addEventListener('click',async e=>{
+    const b=e.currentTarget; if(!window.__loadProject) return;
+    const ids=window.__projectIds(); if(!ids.length){ msg('No project sheets are connected.'); return; }
+    b.disabled=true;
+    for(const pid of ids){ msg('Refreshing '+(DT_PROJ[pid]||pid)+'\u2026',true); await window.__loadProject(pid,{manual:true}); await new Promise(r=>setTimeout(r,400)); }
+    b.disabled=false; msg('\u2714 All connected projects refreshed \u2014 see the Refresh Logs tab.',true);
+  });
+})();
+document.getElementById('view-delay').addEventListener('click',e=>{
+  const p=e.target.closest('[data-daprint]'); if(p){ daPrint(p.dataset.daprint); return; }
+  const f=e.target.closest('[data-dapdf]'); if(f){ daPdf(f.dataset.dapdf, f); }
+});
+document.querySelectorAll('#cv-sub [data-cvp], #uv-sub [data-cvp]').forEach(b=>b.addEventListener('click',()=>{
+  if(window.__tabAllowed && !window.__tabAllowed(b.dataset.cvp)){ if(window.__tabDenied) window.__tabDenied(); return; }
+  cvProject=b.dataset.cvp;
+  if(b.closest('#uv-sub')) renderUnits(); else renderCost();
+}));
 function selectProject(pid, label){
   if(window.__tabAllowed && !window.__tabAllowed(pid)){ if(window.__tabDenied) window.__tabDenied(); return; }
   curProject=pid;
@@ -1691,10 +2664,7 @@ function setBox(pid, id, text, cls){
 function paintChip(){
   const st = PROJECTS[CUR].status;
   statusEl.className = 'livebar' + (st.cls ? ' ' + st.cls : '');
-  statusEl.innerHTML = PROJECTS[CUR].name + ' &mdash; ' + st.msg
-    + (PROJECTS[CUR].id ? ' &middot; <a id="reloadlink">Refresh</a>' : '');
-  const a = D_('reloadlink');
-  if(a) a.addEventListener('click', () => load(CUR));
+  statusEl.innerHTML = PROJECTS[CUR].name + ' &mdash; ' + st.msg;   // no Refresh link here: refresh only from the Database Sync tab
 }
 
 function say(pid, msg, cls){
@@ -1717,12 +2687,13 @@ window.__selectProject = function(pid){
     Q(pid, 'sheetIdInput').value = PROJECTS[pid].id || '';
     setSheetLink(pid);
     Q(pid, 'd-connect').addEventListener('click', () => connectSheet(pid));
-    Q(pid, 'd-refresh').addEventListener('click', () => load(pid));
+    Q(pid, 'd-refresh').addEventListener('click', () => load(pid, {manual: true}));
     Q(pid, 'd-disconnect').addEventListener('click', () => disconnectSheet(pid));
     Q(pid, 'sheetIdInput').addEventListener('keydown', e => { if(e.key === 'Enter') connectSheet(pid); });
   }
   D_('d-guide').addEventListener('click', sheetHelp);
-  D_('d-auto').addEventListener('change', startAuto);
+  D_('d-auto').checked = safeStoreGet('autoRefresh') === '1';          // off unless you switch it on (remembered)
+  D_('d-auto').addEventListener('change', () => { safeStoreSet('autoRefresh', D_('d-auto').checked ? '1' : '0'); startAuto(); });
 })();
 
 /* Load a sheet tab through Google's JSONP (script-tag) endpoint instead of fetch().
@@ -1935,10 +2906,88 @@ function parseActivityDates(rows){
   return (plannedEnd && expectedEnd) ? {plannedEnd: plannedEnd, expectedEnd: expectedEnd, src: 'act'} : null;
 }
 async function loadActivityDates(sheetId){
-  for(const hdr of [0, 1]){
-    try { const d = parseActivityDates(await grab(sheetId, TAB_ACT, hdr)); if(d) return d; } catch(e){ /* tab missing - fine */ }
+  const s = await loadActivitySheet(sheetId);
+  return s ? s.dates : null;
+}
+/* Activity Data tab -> finish dates (as before) + the activity list used by the Delayed Activities tab */
+async function loadActivitySheet(sheetId){
+  let best = null;
+  for(const hdr of [0, 1, 2]){
+    try {
+      const rows = await grab(sheetId, TAB_ACT, hdr);
+      const dates = parseActivityDates(rows), acts = parseActivities(rows);
+      const cand = {dates: dates, acts: acts};
+      if(!best || (acts && (!best.acts || acts.length > best.acts.length)) || (!best.dates && dates)) best = {dates: best && best.dates || dates, acts: (acts && (!best || !best.acts || acts.length > best.acts.length)) ? acts : (best && best.acts)};
+      if(acts && acts.length && dates) break;
+    } catch(e){ /* tab missing - fine */ }
   }
-  return null;
+  return best;
+}
+/* P6 activity export rows -> [{id,name,wbs,ps,pf,s,f,sA,fA,crit,status,pp,ap,reason}] */
+const ACT_CODE = {id:'task_code', name:'task_name', wbs:'wbs_name', ps:'target_start_date', pf:'target_end_date',
+  s:'start_date', f:'end_date', as:'act_start_date', af:'act_end_date', crit:'driving_path_flag', tf:'total_float_hr_cnt',
+  status:'status_code', ap:'complete_pct'};
+const ACT_WANT = {
+  id:     x => /^(activity id|activity_id|act id|id|task code)$/.test(x) || /activity id/.test(x),
+  name:   x => /activity name|task name|^name$|^description$/.test(x),
+  wbs:    x => /^wbs/.test(x) || /wbs (name|path|code)/.test(x),
+  ps:     x => /(planned|baseline|target|bl) start/.test(x) || /^planned date$/.test(x),
+  pf:     x => /(planned|baseline|target|bl) (finish|end)/.test(x),
+  s:      x => /^(start|start date|early start|forecast start|expected start)$/.test(x),
+  f:      x => /^(finish|finish date|end date|end|early finish|forecast finish|expected finish)$/.test(x),
+  as:     x => /actual start/.test(x),
+  af:     x => /actual (finish|end)/.test(x),
+  crit:   x => /critical|criticality|driving path/.test(x),
+  tf:     x => /total float/.test(x),
+  status: x => /status/.test(x) && !/critical/.test(x),
+  pp:     x => /(planned|schedule|scheduled|baseline).*(%|complete|progress)/.test(x),
+  ap:     x => /(activity|physical|actual|performance|duration).*(%|complete|progress)/.test(x) || /^(% complete|progress)$/.test(x),
+  reason: x => /reason|remark|comment|note|cause/.test(x),
+  dd:     x => /data date|last_recalc_date|status date/.test(x)
+};
+function mapActHeader(row){
+  const heads = (row || []).map(c => txt(c).toLowerCase().replace(/\(\*\)|\*/g, '').replace(/\s+/g, ' ').trim());
+  const m = {}, used = {};
+  for(const k in ACT_CODE) for(let i = 0; i < heads.length; i++){
+    if(!used[i] && heads[i].split(' ').indexOf(ACT_CODE[k]) >= 0){ m[k] = i; used[i] = 1; break; }
+  }
+  for(const k in ACT_WANT){ if(m[k] !== undefined) continue;
+    for(let i = 0; i < heads.length; i++){ if(heads[i] && !used[i] && ACT_WANT[k](heads[i])){ m[k] = i; used[i] = 1; break; } }
+  }
+  return m;
+}
+function parseActivities(rows){
+  let hi = -1, m = null;
+  for(let i = 0; i < Math.min(rows.length, 6); i++){
+    const t = mapActHeader(rows[i]);
+    if(t.id !== undefined && (t.pf !== undefined || t.f !== undefined)){ hi = i; m = t; break; }
+  }
+  if(hi < 0) return null;
+  const g = (r, k) => (m[k] === undefined ? null : r[m[k]]);
+  const isA = c => /\sA$/.test(txt(c));                       // P6 marks actual dates with "A"
+  const out = [];
+  for(let i = hi + 1; i < rows.length; i++){
+    const r = rows[i] || [];
+    const id = txt(g(r, 'id')); if(!id) continue;
+    const pf = cellISO(g(r, 'pf')); if(!pf) continue;          // second heading row / summary rows have no date
+    const as = cellISO(g(r, 'as')), af = cellISO(g(r, 'af'));
+    const s0 = cellISO(g(r, 's')), f0 = cellISO(g(r, 'f'));
+    const critTxt = txt(g(r, 'crit')).toLowerCase();
+    let crit = /^(y|yes|true|1|critical)$/.test(critTxt);
+    if(!critTxt && m.tf !== undefined && !isBlank(g(r, 'tf'))) crit = num(g(r, 'tf')) <= 0;
+    out.push({
+      id: id, name: txt(g(r, 'name')), wbs: txt(g(r, 'wbs')),
+      ps: cellISO(g(r, 'ps')), pf: pf,
+      s: as || s0, f: af || f0,
+      sA: !!as || isA(g(r, 's')), fA: !!af || isA(g(r, 'f')),
+      crit: crit, status: txt(g(r, 'status')),
+      pp: m.pp === undefined ? null : pctVal(g(r, 'pp')),
+      ap: m.ap === undefined ? null : pctVal(g(r, 'ap')),
+      reason: txt(g(r, 'reason'))
+    });
+    if(!out.dataDate && m.dd !== undefined){ const v = cellISO(g(r, 'dd')); if(v) out.dataDate = v; }
+  }
+  return out;
 }
 
 /* ---------- S-Curve tab ---------- */
@@ -2238,7 +3287,8 @@ function fillPlanned(sc, base){
 }
 
 /* ---------- run ---------- */
-async function load(pid){
+async function load(pid, opts){
+  opts = opts || {};
   const P = PROJECTS[pid];
   if(P.busy) return;
   if(!P.id){ showNotConnected(pid); return; }
@@ -2278,7 +3328,7 @@ async function load(pid){
       };
       // finish dates: Activity Data tab (Power BI logic) > S-Curve rows > built-in (V3) > P6 finish columns > estimate from the S-curve
       let act = null;
-      try { act = await loadActivityDates(P.id); } catch(e){}
+      try { const AS = await loadActivitySheet(P.id); act = AS && AS.dates; P.data.acts = AS && AS.acts ? AS.acts : null; } catch(e){ P.data.acts = null; }
       let dt = act || (sc && sc.dates) || (P.builtin ? BASE.dates : null) || null;
       if(!dt){
         const est = estimateDates(P.data.scurve), pd = pr.dates;
@@ -2320,8 +3370,21 @@ async function load(pid){
   } finally {
     P.busy = false;
     Q(pid, 'd-refresh').disabled = false;
+    /* manual refresh: tell the log / PDF-backup module (Refresh Logs tab) */
+    if(opts.manual && window.__onManualRefresh){
+      try {
+        await window.__onManualRefresh(pid, {
+          live: !!P.live, name: P.name,
+          rows: P.data && P.data.rows ? P.data.rows.length : 0,
+          state: (D_('d-state-' + pid) || {}).textContent || '',
+          notes: Q(pid, 'd-log').textContent || ''
+        });
+      } catch(e){ console.error(e); }
+    }
   }
 }
+window.__loadProject = (pid, o) => load(pid, o);
+window.__projectIds = () => Object.keys(PROJECTS).filter(pid => PROJECTS[pid].id);
 
 startAuto();
 for(const pid in PROJECTS){
@@ -2356,13 +3419,18 @@ function usersSheetId(){
   return (v !== null && v !== '') ? v : ELEV_DEFAULT_ID;
 }
 
-const ALL_TABS = ['v3','v4','elev','v6','exec','sync','filter'];
+const ALL_TABS = ['v3','v4','elev','v6','exec','detail','cost','units','delay','logs','sync','filter'];
 const TAB_ALIASES = {
   v3:   ['v3','v3businesscentre','v3businesscenter','businesscentre','businesscenter','v3bc'],
   v4:   ['v4','v4grandvertical','grandvertical','v4grand','grand'],
   elev: ['elev','elevation','elevationone','oneelevation'],
   v6:   ['v6'],
   exec: ['exec','executive','executiveview','execview'],
+  detail: ['detail','details','projectdetail','projectdetails','projectsdetail'],
+  cost: ['cost','costview','costs','costsummary'],
+  units: ['units','unit','unitsview','unitview','unitssummary'],
+  delay: ['delay','delays','delayed','delayedactivities','delayactivities'],
+  logs: ['logs','log','refreshlogs','refreshlog','history'],
   sync: ['sync','databasesync','database','db','admin','settings','googlesheetsync'],
   filter: ['filter','monthfilter','monthsfilter','scurvefilter','months']
 };
@@ -2373,8 +3441,12 @@ function parsePermission(raw){
   if(!t || t === '*') return ALL_TABS.slice();
   const toks = t.split(/[,;|\/\n\r]+/).map(norm).filter(Boolean);
   if(!toks.length || toks.some(x => x === 'all' || x === 'any' || x === 'full')) return ALL_TABS.slice();
-  return ALL_TABS.filter(k => toks.some(x => TAB_ALIASES[k].indexOf(x) >= 0));
+  return withDetail(ALL_TABS.filter(k => toks.some(x => TAB_ALIASES[k].indexOf(x) >= 0)));
 }
+/* Project Detail opens for anyone who can see V3, V4 or Elevation (it only shows the projects they are allowed) */
+function withDetail(t){ if(['v3','v4','elev'].some(k=>t.indexOf(k)>=0)) ['detail','cost','units','delay'].forEach(k=>{ if(t.indexOf(k)<0) t.push(k); });
+  if(t.indexOf('sync')>=0 && t.indexOf('logs')<0) t.push('logs');   // whoever manages Database Sync also sees the logs
+  return t; }
 
 const SS = {
   get(k){ try { return window.sessionStorage.getItem(k); } catch(e){ return null; } },
@@ -2383,7 +3455,7 @@ const SS = {
 };
 
 let USER = SS.get('pcd_user') || '';
-let TABS = (SS.get('pcd_tabs') || '').split(',').filter(Boolean);
+let TABS = withDetail((SS.get('pcd_tabs') || '').split(',').filter(Boolean));
 
 window.__tabAllowed = function(key){
   if(!USER) return false;
@@ -2598,5 +3670,52 @@ else { USER = ''; TABS = []; $('loginGate').hidden = false; fillUsernames(); }
 })();
 </script>
 
+
+<script>
+/* ---------- full-screen (zoom) for every table ---------- */
+(function(){
+  const ICON_IN='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/></svg>';
+  const ICON_OUT='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg>';
+  let zoomKey=null;           // remembers which table is open, so a re-draw (sort/filter) keeps it full screen
+  const SEL='#view-dashboard .card.tbl, .view:not(#view-sync) .dt-card';
+  function keyOf(card){
+    const host=card.parentElement && card.parentElement.closest('[id]');
+    const list=[...(host||document).querySelectorAll(SEL)];
+    return (host?host.id:'')+'#'+list.indexOf(card);
+  }
+  function setBtn(card,on){
+    const b=card.querySelector(':scope > .zbtn, :scope > .zbar > .zbtn'); if(!b) return;
+    b.innerHTML=(on?ICON_OUT+'Exit full screen':ICON_IN+'Full screen');
+    b.title=on?'Exit full screen (Esc)':'Open this table full screen';
+  }
+  function zoom(card,on){
+    document.querySelectorAll('.zoomed').forEach(c=>{ if(c!==card){ c.classList.remove('zoomed'); setBtn(c,false);} });
+    card.classList.toggle('zoomed',on); setBtn(card,on);
+    document.body.classList.toggle('has-zoom',on);
+    zoomKey=on?keyOf(card):null;
+    if(on) card.scrollTop=0;
+  }
+  function addButtons(){
+    document.querySelectorAll(SEL).forEach(card=>{
+      if(card.querySelector(':scope > .zbtn, :scope > .zbar')) return;
+      const b=document.createElement('button'); b.type='button'; b.className='zbtn';
+      b.addEventListener('click',e=>{ e.stopPropagation(); zoom(card,!card.classList.contains('zoomed')); });
+      if(card.classList.contains('dt-card')){ const bar=document.createElement('div'); bar.className='zbar'; bar.appendChild(b); card.insertBefore(bar,card.firstChild); }
+      else card.insertBefore(b,card.firstChild);
+      setBtn(card,false);
+    });
+    if(zoomKey && !document.querySelector('.zoomed')){
+      const c=[...document.querySelectorAll(SEL)].find(x=>keyOf(x)===zoomKey && x.offsetParent!==null);
+      if(c) zoom(c,true); else { zoomKey=null; document.body.classList.remove('has-zoom'); }
+    }
+  }
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const c=document.querySelector('.zoomed'); if(c) zoom(c,false); } });
+  // leaving the page/tab closes full screen
+  document.addEventListener('click',e=>{ if(e.target.closest('#apptabs button')){ const c=document.querySelector('.zoomed'); if(c) zoom(c,false); } },true);
+  let t=null;
+  new MutationObserver(()=>{ clearTimeout(t); t=setTimeout(addButtons,30); }).observe(document.body,{childList:true,subtree:true});
+  addButtons();
+})();
+</script>
 </body>
 </html>
