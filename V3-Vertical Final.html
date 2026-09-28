@@ -1908,7 +1908,7 @@ function renderDetail(){
     return;
   }
   const keepX=[...host.querySelectorAll('.dt-scroll')].map(el=>[el.scrollLeft,el.scrollTop]);
-  let html='<p class="dt-note">Click any column heading to sort. Saving = Earned \u2212 Actual (green = saving, red = over, amber = nil). Grey and Finishing show material items; MEP includes labour except Plumbing labour.</p>';
+  let html='';
   const hiddenB=d.rows.filter(r=>d.depts[r[IDX.dept]]==='Finishing' && DT_FIN_HIDE.indexOf(d.majs[r[IDX.maj]])>=0).reduce((a,r)=>a+r[C.bcost],0);
   dtGroups(d).forEach(g=>{ const rows=dtAgg(d,g); if(!rows.length) return;
     if(g.name==='Finishing' && hiddenB){
