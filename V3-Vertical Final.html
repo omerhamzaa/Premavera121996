@@ -1098,6 +1098,30 @@ function matches(r, skip){
   }
   return true;
 }
+/* Planned / expected end for the rows in view (same measures as the whole project:
+   MAX(Planned Finish) vs MAX(Finish)), taken over the activities linked to the filtered rows.
+   Link: Activity ID in Progress Data if present, otherwise the resource names in Activity Data. */
+function filterOn(){ for(const k in sel) if(sel[k].size) return true; return false; }
+function viewDates(all){
+  if(!filterOn()) return {dates:D.dates, note:null};
+  if(!D.acts || !D.acts.length) return {dates:D.dates, note:'Whole project \u2014 filters need the Activity Data tab'};
+  const ids=new Set(); let byId=false;
+  all.forEach(r=>{ if(r.length>13 && r[13]){ byId=true; ids.add(String(r[13]).trim().toLowerCase()); } });
+  let L;
+  if(byId) L=D.acts.filter(a=>ids.has(String(a.id).trim().toLowerCase()));
+  else {
+    const norm=t=>', '+String(t).toLowerCase().replace(/\s*,\s*/g,', ').replace(/\s+/g,' ').trim()+', ';
+    const names=[...new Set(all.map(r=>norm(D.itms[r[IDX.itm]])))];
+    L=D.acts.filter(a=>{ if(!a.res) return false; if(a._rk===undefined) a._rk=norm(a.res);
+      for(const n of names) if(a._rk.indexOf(n)>=0) return true; return false; });
+  }
+  if(!L.length) return {dates:null, note:'No activities linked to this filter'};
+  let pe='', ee='';
+  L.forEach(a=>{ if(a.pf && a.pf>pe) pe=a.pf; const f=a.f||''; if(f>ee) ee=f; });
+  if(!pe || !ee) return {dates:null, note:'No finish dates for the filtered activities'};
+  return {dates:{plannedEnd:pe, expectedEnd:ee, src:'filt'},
+          note:'Filtered: '+L.length+' activities \u00b7 MAX(Planned Finish) vs MAX(Finish)'+(byId?'':' (linked by resource name)')};
+}
 // rows passing every filter
 function rowsAll(){ return D.rows.filter(r=>matches(r,null)); }
 // rows for the reported table / progress bars (labour rule applied)
@@ -1467,16 +1491,17 @@ function render(){
   h.innerHTML='<i class="dot" style="width:13px;height:13px;background:'+(under?'var(--good)':'var(--bad)')+'"></i>'
     +'<span style="color:'+(under?'var(--good)':'var(--bad)')+'">'+(under?'Under budget':'Over budget')+'</span>';
 
-  // dates
-  if(D.dates && D.dates.plannedEnd && D.dates.expectedEnd){
-    const p=new Date(D.dates.plannedEnd+'T00:00:00'), e=new Date(D.dates.expectedEnd+'T00:00:00');
-    document.getElementById('k-pend').textContent=fmtDate(D.dates.plannedEnd);
-    document.getElementById('k-eend').textContent=fmtDate(D.dates.expectedEnd);
+  // dates (follow the filters when Activity Data is loaded)
+  const VD=viewDates(all);
+  if(VD.dates && VD.dates.plannedEnd && VD.dates.expectedEnd){
+    const p=new Date(VD.dates.plannedEnd+'T00:00:00'), e=new Date(VD.dates.expectedEnd+'T00:00:00');
+    document.getElementById('k-pend').textContent=fmtDate(VD.dates.plannedEnd);
+    document.getElementById('k-eend').textContent=fmtDate(VD.dates.expectedEnd);
     document.getElementById('k-delay').textContent=Math.round((e-p)/86400000);
-    document.getElementById('k-dsrc').textContent = D.dates.src==='act' ? 'Activity Data: MAX(Planned Finish) vs MAX(Finish)' : D.dates.src==='est' ? 'Estimated from S-curve (SPI-t)' : D.dates.src==='mix' ? 'Expected: P6 Finish \u00b7 Planned: S-curve 100% month' : '';
+    document.getElementById('k-dsrc').textContent = VD.note ? VD.note : D.dates.src==='act' ? 'Activity Data: MAX(Planned Finish) vs MAX(Finish)' : D.dates.src==='est' ? 'Estimated from S-curve (SPI-t)' : D.dates.src==='mix' ? 'Expected: P6 Finish \u00b7 Planned: S-curve 100% month' : '';
   } else {
     ['k-pend','k-eend','k-delay'].forEach(id=>{ document.getElementById(id).textContent='\u2014'; });
-    document.getElementById('k-dsrc').textContent='';
+    document.getElementById('k-dsrc').textContent=VD.note||'';
   }
 
   // progress bars: Grey / MEP / Finishing
@@ -3489,6 +3514,7 @@ function estimateDates(sc){
    Days Difference   = DATEDIFF(Planned End, Expected End, DAY)
    (Baseline finish is used for Planned End only if there is no Planned Finish column.) */
 const TAB_ACT = 'Activity Data';
+const TAB_ACT_ALT = ['Activity Data', 'Activities'];   // P6 export tab can keep its own name
 function parseActivityDates(rows){
   let hi = -1, cB = -1, cP = -1, cF = -1;
   for(let i = 0; i < Math.min(rows.length, 6) && hi < 0; i++){
@@ -3516,27 +3542,30 @@ async function loadActivityDates(sheetId){
 /* Activity Data tab -> finish dates (as before) + the activity list used by the Delayed Activities tab */
 async function loadActivitySheet(sheetId){
   let best = null;
+  for(const tab of TAB_ACT_ALT){
+  if(best && best.dates && best.acts && best.acts.length) break;
   for(const hdr of [0, 1, 2]){
     try {
-      const rows = await grab(sheetId, TAB_ACT, hdr);
+      const rows = await grab(sheetId, tab, hdr);
       const dates = parseActivityDates(rows), acts = parseActivities(rows);
       const cand = {dates: dates, acts: acts};
       if(!best || (acts && (!best.acts || acts.length > best.acts.length)) || (!best.dates && dates)) best = {dates: best && best.dates || dates, acts: (acts && (!best || !best.acts || acts.length > best.acts.length)) ? acts : (best && best.acts)};
       if(acts && acts.length && dates) break;
     } catch(e){ /* tab missing - fine */ }
   }
+  }
   return best;
 }
 /* P6 activity export rows -> [{id,name,wbs,ps,pf,s,f,sA,fA,crit,status,pp,ap,reason}] */
 const ACT_CODE = {id:'task_code', name:'task_name', wbs:'wbs_name', ps:'target_start_date', pf:'target_end_date',
   s:'start_date', f:'end_date', as:'act_start_date', af:'act_end_date', crit:'driving_path_flag', tf:'total_float_hr_cnt',
-  status:'status_code', ap:'complete_pct'};
+  status:'status_code', ap:'complete_pct', res:'resource_list'};
 const ACT_WANT = {
   id:     x => /^(activity id|activity_id|act id|id|task code)$/.test(x) || /activity id/.test(x),
   name:   x => /activity name|task name|^name$|^description$/.test(x),
   wbs:    x => /^wbs/.test(x) || /wbs (name|path|code)/.test(x),
-  ps:     x => /(planned|baseline|target|bl) start/.test(x) || /^planned date$/.test(x),
-  pf:     x => /(planned|baseline|target|bl) (finish|end)/.test(x),
+  ps:     x => /(planned|baseline|target|bl) start/.test(x) || /^planned date$/.test(x) || /base_start_date|bl project start/.test(x),
+  pf:     x => /(planned|baseline|target|bl) (finish|end)/.test(x) || /base_end_date|bl project (finish|end)/.test(x),   // P6: (*)BL Project Finish = base_end_date
   s:      x => /^(start|start date|early start|forecast start|expected start)$/.test(x),
   f:      x => /^(finish|finish date|end date|end|early finish|forecast finish|expected finish)$/.test(x),
   as:     x => /actual start/.test(x),
@@ -3544,9 +3573,10 @@ const ACT_WANT = {
   crit:   x => /critical|criticality|driving path/.test(x),
   tf:     x => /total float/.test(x),
   status: x => /status/.test(x) && !/critical/.test(x),
-  pp:     x => /(planned|schedule|scheduled|baseline).*(%|complete|progress)/.test(x),
-  ap:     x => /(activity|physical|actual|performance|duration).*(%|complete|progress)/.test(x) || /^(% complete|progress)$/.test(x),
+  pp:     x => /(planned|schedule|scheduled|baseline).*(%|complete|progress)/.test(x) || /sched_complete_pct/.test(x),
+  ap:     x => /(activity|physical|actual|performance|duration).*(%|complete|progress)/.test(x) || /^(% complete|progress)$/.test(x) || /perfm_complete_pct/.test(x),
   reason: x => /reason|remark|comment|note|cause/.test(x),
+  res:    x => /^resources?$|resource list/.test(x),
   dd:     x => /data date|last_recalc_date|status date/.test(x)
 };
 function mapActHeader(row){
@@ -3587,7 +3617,8 @@ function parseActivities(rows){
       crit: crit, status: txt(g(r, 'status')),
       pp: m.pp === undefined ? null : pctVal(g(r, 'pp')),
       ap: m.ap === undefined ? null : pctVal(g(r, 'ap')),
-      reason: txt(g(r, 'reason'))
+      reason: txt(g(r, 'reason')),
+      res: txt(g(r, 'res'))
     });
     if(!out.dataDate && m.dd !== undefined){ const v = cellISO(g(r, 'dd')); if(v) out.dataDate = v; }
   }
@@ -3640,7 +3671,7 @@ const P6_CODE = {
   dept:'rsrc_catg_v_department_id', maj:'rsrc_catg_v_major_items_id', flr:'rsrc_catg_v_floors_resources_id',
   itm:'rsrc__rsrc_name', bcost:'target_cost', pcost:'bcws', ecost:'bcwp', acost:'act_cost',
   bqty:'target_qty', pqty:'sched_qty', eqty:'perfm_qty', aqty:'act_qty',
-  pfin:'target_end_date', efin:'end_date'
+  pfin:'target_end_date', efin:'end_date', act:'task_id', rtype:'rsrc_type'
 };
 const NOT_QTY  = r => !/(unit|qty|quantit)/.test(r.replace(/unit of measure/g,''));
 const NOT_COST = r => !/(cost|price)/.test(r);
@@ -3659,7 +3690,9 @@ const WANT = {
   eqty:  r => /(earned|perfm_qty)/.test(r) && /(qty|quantit|unit)/.test(r) && NOT_COST(r),
   aqty:  r => /(actual|act_qty)/.test(r) && /(qty|quantit|unit)/.test(r) && NOT_COST(r) && !/(start|finish)/.test(r),
   pfin:  r => /(planned|baseline|target)/.test(r) && /(finish|end)/.test(r) && NOT_COST(r) && NOT_QTY(r),
-  efin:  r => (/^(finish|end date|end)$/.test(r) || /(forecast|expected|early|remaining)/.test(r) && /(finish|end)/.test(r)) && NOT_COST(r) && NOT_QTY(r)
+  efin:  r => (/^(finish|end date|end)$/.test(r) || /(forecast|expected|early|remaining)/.test(r) && /(finish|end)/.test(r)) && NOT_COST(r) && NOT_QTY(r),
+  act:   r => /^(activity id|task code)$/.test(r) || /\b(task_code|task__task_code)\b/.test(r),
+  rtype: r => /^resource type$/.test(r)
 };
 
 function mapHeader(headRow){
@@ -3738,19 +3771,42 @@ function parseRows(rows){
   }
   const get = (r, k) => (m[k] === undefined ? null : r[m[k]]);
 
+  /* Per activity (needs the Activity ID column):
+     - a resource with no Department code takes the code of the other resources on the same
+       activity (e.g. A1000 LABOR), instead of being dropped;
+     - Piling activities that carry only Labor resources (the separate labour-contract
+       activities, e.g. OE210-OE290) are shown as their own category, so "Piling"
+       is the progress of the actual pile + capping beam work. */
+  const actDept = new Map(), actFlr = new Map(), actLabOnly = new Map();
+  if(m.act !== undefined){
+    for(let i = hi + 1; i < rows.length; i++){
+      const r = rows[i]; if(!r || !r.length) continue;
+      const id = txt(get(r, 'act')); if(!id) continue;
+      const d = txt(get(r, 'dept')), f = txt(get(r, 'flr'));
+      if(d && !actDept.has(id)) actDept.set(id, d);
+      if(f && !actFlr.has(id)) actFlr.set(id, f);
+      if(m.rtype !== undefined){
+        const lab = /^lab/i.test(txt(get(r, 'rtype')));
+        actLabOnly.set(id, (actLabOnly.has(id) ? actLabOnly.get(id) : true) && lab);
+      }
+    }
+  }
   for(let i = hi + 1; i < rows.length; i++){
     const r = rows[i];
     if(!r || !r.length) continue;
-    const deptRaw = txt(get(r, 'dept'));
+    const actId = m.act !== undefined ? txt(get(r, 'act')) : '';
+    const deptRaw = txt(get(r, 'dept')) || (actId && actDept.get(actId)) || '';
     if(!deptRaw) continue;
     // a second heading row (e.g. "V-Department") is not data
     if(/^(v-)?(department|categor)/i.test(deptRaw) || deptRaw === P6_CODE.dept) continue;
     const majRaw = txt(get(r, 'maj'));
     const majName = niceMajor(majRaw);
+    let deptName = niceDept(deptRaw);
+    if(deptName === 'Piling' && actId && actLabOnly.get(actId)) deptName = 'Piling - Labour Contract';
     out.push([
-      idx(depts, di, niceDept(deptRaw)),
+      idx(depts, di, deptName),
       idx(majs,  mi, majName),
-      idx(flrs,  fi, niceFloor(txt(get(r, 'flr')))),
+      idx(flrs,  fi, niceFloor(txt(get(r, 'flr')) || (actId && actFlr.get(actId)) || '')),
       idx(itms,  ii, txt(get(r, 'itm'))),
       (function(){
         const c = get(r, 'lab');
@@ -3764,6 +3820,7 @@ function parseRows(rows){
       num(get(r, 'bcost')), num(get(r, 'pcost')), num(get(r, 'ecost')), num(get(r, 'acost')),
       num(get(r, 'bqty')),  num(get(r, 'pqty')),  num(get(r, 'eqty')),  num(get(r, 'aqty'))
     ]);
+    if(m.act !== undefined) out[out.length - 1].push(txt(get(r, 'act')));   // [13] Activity ID -> links the filters to Activity Data
   }
   if(!out.length) throw new Error('Progress Data: no data rows found');
 
