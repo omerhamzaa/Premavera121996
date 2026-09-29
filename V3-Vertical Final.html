@@ -591,6 +591,25 @@ body.has-zoom::before{content:"";position:fixed;inset:0;background:rgba(19,42,44
   box-shadow:0 10px 26px rgba(0,0,0,.25);max-width:380px;display:none;line-height:1.45}
 #lg-toast a{color:#F6C467;font-weight:700}
 #lg-toast.bad{background:#8E2F24}.da-st.ns{background:#F9DCDC;color:#9B2C2C}.da-st.cp{background:#DDF0E4;color:#1F6B42}
+/* Report tab */
+.rp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;margin-bottom:16px}
+.rp-card{display:flex;flex-direction:column;gap:10px}
+.rp-card.is-empty{opacity:.75}
+.rp-head{display:flex;align-items:center;gap:10px}
+.rp-head h2{margin:0;flex:1}
+.rp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rp-stats div{background:var(--paper);border:1px solid var(--line-soft);border-radius:8px;padding:8px 6px;text-align:center}
+.rp-stats span{display:block;font-size:11px;color:var(--muted)}
+.rp-stats b{display:block;font-family:var(--disp);font-size:22px;color:var(--teal-deep);line-height:1.2}
+.rp-stats b.good{color:var(--good)}.rp-stats b.warn{color:var(--warn)}.rp-stats b.bad{color:var(--bad)}
+.rp-stats small{font-size:10.5px;color:var(--muted)}
+.rp-empty{margin:0;color:var(--muted);font-size:13px}
+.rp-lbl{font-size:12px;color:var(--muted);margin-bottom:-6px}
+.rp-card textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font:inherit;font-size:13px;resize:vertical}
+.rp-btn{padding:10px 14px;font-size:14px;font-weight:600}
+.rp-btn:disabled{opacity:.5;cursor:not-allowed}
+.rp-info{font-size:13px}
+.rp-info ol{margin:8px 0 0;padding-left:20px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -634,6 +653,7 @@ body.has-zoom::before{content:"";position:fixed;inset:0;background:rgba(19,42,44
       <button type="button" role="tab" data-go="cost" aria-selected="false">💰 Cost View</button>
       <button type="button" role="tab" data-go="units" aria-selected="false">📦 Units View</button>
       <button type="button" role="tab" data-go="delay" aria-selected="false">⏱ Delayed Activities</button>
+      <button type="button" role="tab" data-go="report" aria-selected="false">📊 Report</button>
       <button type="button" role="tab" data-go="logs" aria-selected="false">🗂 Refresh Logs</button>
       <button type="button" role="tab" data-go="sync" aria-selected="false">🔒 Database Sync</button>
     </nav>
@@ -867,6 +887,30 @@ body.has-zoom::before{content:"";position:fixed;inset:0;background:rgba(19,42,44
     </div>
     <div class="da-print-only" id="da-print-info"></div>
     <div id="da-host"></div>
+  </section>
+
+  <section class="view" id="view-report">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">PowerPoint report</div>
+        <h2>Report</h2>
+        <p class="lead">Choose a project and press Download. You get a PowerPoint (8 slides) made from the latest data on this dashboard.</p>
+      </div>
+    </div>
+    <div id="rp-host"></div>
+    <div class="card rp-info">
+      <b>What the report contains</b>
+      <ol>
+        <li><b>Overview</b> &mdash; Progress %, SPI, CPI, planned &amp; expected end, delay, budget health, progress completion, S-curve, where the money stands</li>
+        <li><b>Executive View</b> &mdash; all projects side by side (same slide in every project&rsquo;s report)</li>
+        <li><b>Cost &amp; units summary</b> &mdash; overall cost and units boxes + category table (Grey, Electrical, &hellip; Total) with savings</li>
+        <li><b>Cost View</b> &mdash; overall and category-wise cost boxes</li>
+        <li><b>Units View</b> &mdash; overall and category-wise units boxes</li>
+        <li><b>Major items</b> &mdash; Grey, MEP and Finishing tables by major item</li>
+        <li><b>Floor wise progress</b> &mdash; planned % and actual % per floor</li>
+        <li><b>Activity summary &amp; delayed activities</b> &mdash; from the Activity Data tab of the sheet</li>
+      </ol>
+    </div>
   </section>
 
   <section class="view" id="view-logs">
@@ -1609,6 +1653,7 @@ function showView(name){
   if(name==='cost') renderCost();
   if(name==='units') renderUnits();
   if(name==='delay') renderDelay();
+  if(name==='report') renderReport();
   if(name==='logs') renderLogs();
   window.scrollTo({top:0});
 }
@@ -1841,6 +1886,7 @@ window.__renderExec = function(list){
   if(document.getElementById('view-cost').classList.contains('active')) renderCost();
   if(document.getElementById('view-units').classList.contains('active')) renderUnits();
   if(document.getElementById('view-delay').classList.contains('active')) renderDelay();
+  if(document.getElementById('view-report').classList.contains('active')) renderReport();
 };
 /* ---------- Project Detail tab: Grey / MEP / Finishing tables per project ---------- */
 const DT_PROJ={v3:'V3 Business Centre', v4:'V4 Grand Vertical', elev:'Elevation'};
@@ -2501,6 +2547,483 @@ document.querySelectorAll('#cv-sub [data-cvp], #uv-sub [data-cvp]').forEach(b=>b
   cvProject=b.dataset.cvp;
   if(b.closest('#uv-sub')) renderUnits(); else renderCost();
 }));
+/* =====================================================================
+   REPORT tab: one PowerPoint report per project (built in the browser)
+   Slides: Overview · Cost & units summary · Major items · Floor-wise
+           progress · Activity summary & delayed activities
+   ===================================================================== */
+const RP={bg:'F7F5EF',card:'FFFFFF',line:'DAD5C8',ink:'1E2A2B',teal:'2E5F63',deep:'22484B',soft:'DCE7E6',gold:'D6A93C',
+  head:'F6C467',earn:'9C5B3C',good:'3E9C6B',bad:'C8553D',warn:'E0A93B',muted:'6E7A78',tot:'EFEBE0',alt:'FBFAF6'};
+const RP_F='Calibri';
+const RP_MEPS=['Electrical','Firefighting','HVAC','Plumbing'];
+let rpLib=null;
+function rpLoadLib(){
+  if(window.PptxGenJS) return Promise.resolve();
+  if(!rpLib) rpLib=daLoadScript('https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js')
+    .catch(()=>daLoadScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js'))
+    .then(()=>{ if(!window.PptxGenJS) throw new Error('PowerPoint maker did not load'); })
+    .catch(e=>{ rpLib=null; throw e; });
+  return rpLib;
+}
+const rpKeep=(d,r)=> r[C.lab]!==1 || LABOUR_EXCLUDED.indexOf(d.depts[r[IDX.dept]])===-1;
+const rpPct=v=> v===0 ? '0%' : (Math.abs(v)<10 ? v.toFixed(1) : Math.round(v).toString())+'%';
+/* progress groups, same as the dashboard's "Progress completion" bars */
+function rpGroups(d){
+  const budgetOf=names=>d.rows.filter(r=>rpKeep(d,r)&&names.indexOf(d.depts[r[IDX.dept]])>=0).reduce((a,r)=>add(a,r),blank()).bcost;
+  const base=[['Grey',['Grey']],['MEP',RP_MEPS],['Finishing',['Finishing']]];
+  if(base.every(g=>budgetOf(g[1])>0)) return base;
+  const seq=ORDER.concat(d.depts.filter(x=>ORDER.indexOf(x)<0).sort()), out=[];
+  seq.forEach(x=>{
+    if(d.depts.indexOf(x)<0) return;
+    if(RP_MEPS.indexOf(x)>=0){ if(!out.some(g=>g[0]==='MEP') && budgetOf(RP_MEPS)>0) out.push(['MEP',RP_MEPS]); }
+    else if(budgetOf([x])>0) out.push([x,[x]]);
+  });
+  return out.length?out:base;
+}
+function rpFloorRank(f){
+  const s=String(f).toLowerCase().trim();
+  const early={'preliminaries':0,'temporary':1,'piling':2,'pile':2,'raft':3,'basement 3':4,'basement 2':5,'basement 1':6,'lower ground':7,'ground floor':8,'upper ground':9};
+  if(early[s]!=null) return early[s];
+  const m=s.match(/^(\d+)\s*(st|nd|rd|th)\b/); if(m) return 10+(+m[1]);
+  const late={'roof top':200,'top roof':201,'external':210,'common areas':211};
+  if(late[s]!=null) return late[s];
+  return 300;
+}
+const rpFloorLabel=f=>String(f).replace(/^(\d+\s*(st|nd|rd|th))\s*F$/i,'$1 Floor');
+
+function rpBuild(it, opt){
+  const d=it.data, name=it.name, pres=new window.PptxGenJS();
+  const meta=pres._rpMeta=[];               // one entry per chart, in the order they are added (chart1.xml, chart2.xml, ...)
+  pres.layout='LAYOUT_WIDE';                        // 13.33 x 7.5 in, same as the Power BI export
+  pres.author='The Vertical'; pres.company='The Vertical'; pres.title=name+' Report';
+  const SW=13.333, M=0.4, CW=SW-2*M;
+  const now=new Date(), today=String(now.getDate()).padStart(2,'0')+'-'+MON[now.getMonth()]+'-'+now.getFullYear();
+  const src=it.cls==='ok'?'Live Google Sheet':it.builtin&&!it.live?'Built-in data':'Partly live data';
+  let pageNo=0;
+  const shadow=()=>({type:'outer',color:'000000',opacity:0.10,blur:4,offset:1.5,angle:90});
+  function slide(title){
+    const s=pres.addSlide(); s.background={color:RP.bg}; pageNo++;
+    s.addText(title+' \u2014 '+name,{x:M,y:0.22,w:9.2,h:0.5,fontFace:RP_F,fontSize:22,bold:true,color:RP.teal,margin:0,isTextBox:true,valign:'middle'});
+    s.addText([{text:'Report date: ',options:{color:RP.muted}},{text:today,options:{bold:true,color:RP.ink}},
+               {text:'   |   Data: ',options:{color:RP.muted}},{text:src,options:{bold:true,color:RP.ink}}],
+      {x:SW-M-3.6,y:0.26,w:3.6,h:0.42,fontFace:RP_F,fontSize:10,align:'right',margin:0,isTextBox:true,valign:'middle'});
+    s.addText('The Vertical \u2014 Project Control Dashboard',{x:M,y:7.14,w:6,h:0.25,fontFace:RP_F,fontSize:9,color:RP.muted,margin:0,isTextBox:true});
+    s.addText(String(pageNo),{x:SW-M-1,y:7.14,w:1,h:0.25,fontFace:RP_F,fontSize:9,color:RP.muted,align:'right',margin:0,isTextBox:true});
+    return s;
+  }
+  function card(s,x,y,w,h,title){
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:x,y:y,w:w,h:h,fill:{color:RP.card},line:{color:RP.line,width:0.75},rectRadius:0.08,shadow:shadow()});
+    if(title) s.addText(title,{x:x+0.18,y:y+0.1,w:w-0.36,h:0.36,fontFace:RP_F,fontSize:13,bold:true,color:RP.deep,margin:0,isTextBox:true,valign:'middle'});
+  }
+  function stat(s,x,y,w,h,label,value,sub,color,fs){
+    card(s,x,y,w,h);
+    s.addText(label,{x:x+0.08,y:y+0.08,w:w-0.16,h:0.28,fontFace:RP_F,fontSize:11,color:RP.muted,align:'center',margin:0,isTextBox:true,valign:'middle'});
+    s.addText(value,{x:x+0.08,y:y+0.36,w:w-0.16,h:h-(sub?0.72:0.46),fontFace:RP_F,fontSize:fs||(h>1?24:18),bold:true,color:color||RP.deep,align:'center',margin:0,isTextBox:true,valign:'middle',fit:'shrink'});
+    if(sub) s.addText(sub,{x:x+0.08,y:y+h-0.36,w:w-0.16,h:0.28,fontFace:RP_F,fontSize:9.5,color:RP.muted,align:'center',margin:0,isTextBox:true,valign:'middle'});
+  }
+  const hc=(t,o)=>({text:t,options:Object.assign({bold:true,fill:{color:RP.head},color:RP.ink,align:'center',valign:'middle'},o||{})});
+  const tc=(t,o)=>({text:String(t),options:Object.assign({align:'right',valign:'middle'},o||{})});
+  const TB=(o)=>Object.assign({fontFace:RP_F,border:{type:'solid',pt:0.5,color:RP.line},margin:[1,5,1,5],valign:'middle',autoPage:false},o);
+  const signCol=v=>{ const r=Math.round(v); return r>0?RP.good:r<0?RP.bad:RP.warn; };
+  const dotCell=(v,o)=>({text:[{text:'\u25CF ',options:{color:signCol(v)}},{text:nf0(v),options:{color:RP.ink}}],options:Object.assign({align:'right',valign:'middle'},o||{})});
+
+  /* ---------- totals ---------- */
+  const raw=d.rows.reduce((t,r)=>add(t,r),blank());
+  const rep=d.rows.filter(r=>rpKeep(d,r)).reduce((t,r)=>add(t,r),blank());
+  const plannedPct=raw.bcost?raw.pcost/raw.bcost*100:0, earnedPct=raw.bcost?raw.ecost/raw.bcost*100:0;
+  const spi=raw.pcost?raw.ecost/raw.pcost:0, cpi=raw.acost?raw.ecost/raw.acost:0;
+  const dt=d.dates||{}, delay=(dt.plannedEnd&&dt.expectedEnd)?daDays(dt.plannedEnd,dt.expectedEnd):null;
+
+  /* ================= slide 1: overview ================= */
+  let s=slide('Overview');
+  const kw=(CW-6*0.14)/7, ky=0.85, kh=1.15;
+  const spiCol=spi>=1?RP.good:spi>=0.9?RP.warn:RP.bad, cpiCol=!raw.acost?RP.muted:cpi>=1?RP.good:cpi>=0.9?RP.warn:RP.bad;
+  const cpiTxt=!raw.acost?'No actual cost yet':cpi>1.10?'Check costs':cpi>=1?'Good spending':cpi>=0.95?'Slightly over':cpi>=0.9?'Over budget':'Overspending';
+  [['Progress %',earnedPct.toFixed(2)+'%','Planned '+plannedPct.toFixed(2)+'%',RP.deep],
+   ['SPI',spi.toFixed(2),spi>=1?'On or ahead of schedule':'Behind by '+((1-spi)*100).toFixed(0)+'%',spiCol],
+   ['Cost Efficiency (CPI)',raw.acost?cpi.toFixed(2):'\u2014',cpiTxt,cpiCol],
+   ['Planned End Date',dt.plannedEnd?fmtDate(dt.plannedEnd):'\u2014','',RP.deep,18],
+   ['Expected End Date',dt.expectedEnd?fmtDate(dt.expectedEnd):'\u2014','',RP.deep,18],
+   ['Project Delay (Days)',delay==null?'\u2014':String(delay),delay==null?'':delay>0?'Behind planned finish':'On time',delay==null?RP.muted:delay>0?RP.bad:RP.good],
+   ['Budget Health',!raw.acost?'\u2014':cpi>=1?'Under Budget':'Over Budget','CPI '+(raw.acost?cpi.toFixed(2):'\u2014'),!raw.acost?RP.muted:cpi>=1?RP.good:RP.bad,19]
+  ].forEach((k,i)=>stat(s,M+i*(kw+0.14),ky,kw,kh,k[0],k[1],k[2],k[3],k[4]));
+  const remark=(opt&&opt.remark||'').trim();
+  const bottom=remark?6.4:7.02, ly=2.2;
+  // progress completion
+  const groups=rpGroups(d);
+  const gT=groups.map(([n,mem])=>{ const t=d.rows.filter(r=>rpKeep(d,r)&&mem.indexOf(d.depts[r[IDX.dept]])>=0).reduce((a,r)=>add(a,r),blank());
+    return {n:n,p:t.bcost?t.pcost/t.bcost*100:0,a:t.bcost?t.ecost/t.bcost*100:0}; });
+  const lw=5.0, pcH=(bottom-ly)*0.56;
+  card(s,M,ly,lw,pcH,'Progress Completion');
+  const gr=gT;
+  meta.push({kind:'bar'});
+  s.addChart(pres.charts.BAR,[{name:'Planned %',labels:gr.map(g=>g.n),values:gr.map(g=>+(g.p/100).toFixed(4))},
+                              {name:'Actual %',labels:gr.map(g=>g.n),values:gr.map(g=>+(g.a/100).toFixed(4))}],
+    {x:M+0.1,y:ly+0.45,w:lw-0.2,h:pcH-0.52,barDir:'bar',barGrouping:'clustered',catAxisOrientation:'maxMin',barGapWidthPct:60,chartColors:[RP.teal,RP.gold],
+     valAxisMinVal:0,valAxisMaxVal:1,valAxisHidden:true,valGridLine:{style:'none'},catGridLine:{style:'none'},
+     catAxisLabelColor:RP.ink,catAxisLabelFontSize:11,catAxisLabelFontFace:RP_F,catAxisLineShow:false,
+     showValue:true,dataLabelPosition:'outEnd',dataLabelFormatCode:'0.0%',dataLabelFontSize:10,dataLabelFontFace:RP_F,dataLabelColor:RP.ink,
+     showLegend:true,legendPos:'b',legendFontSize:10,legendFontFace:RP_F});
+  // where the money stands
+  const mY=ly+pcH+0.15, mH=bottom-mY;
+  card(s,M,mY,lw,mH,'Where the Money Stands');
+  const saving=rep.ecost-rep.acost, savedU=rep.eqty-rep.aqty;
+  const mf=[['Budgeted cost','Rs '+nf0(rep.bcost)],['Earned to date','Rs '+nf0(rep.ecost)],['Spent to date','Rs '+nf0(rep.acost)],
+            ['Saving so far','Rs '+nf0(saving),signCol(saving)],['Units saved',nf0(savedU),signCol(savedU)],['Budget left','Rs '+nf0(rep.bcost-rep.acost)]];
+  const mRows=[], half=Math.ceil(mf.length/2);
+  for(let i=0;i<half;i++){ const a=mf[i], b=mf[i+half]||['',''];
+    mRows.push([tc(a[0],{align:'left',color:RP.muted}),tc(a[1],{bold:true,color:a[2]||RP.ink}),tc(b[0],{align:'left',color:RP.muted}),tc(b[1],{bold:true,color:b[2]||RP.ink})]); }
+  const mrh=Math.min(0.36,(mH-0.6)/half);
+  s.addTable(mRows,TB({x:M+0.15,y:mY+0.5,w:lw-0.3,colW:[1.0,1.35,1.0,1.35],rowH:mrh,fontSize:10.5,border:{type:'none'},margin:[1,3,1,3]}));
+  // S-curve
+  const sx=M+lw+0.2, sw=CW-lw-0.2;
+  card(s,sx,ly,sw,bottom-ly,'S-Curve Trend');
+  const sc=d.scurve||{labels:[]};
+  if(sc.labels && sc.labels.length>1){
+    const ser=[['Planned %',sc.planned],['Actual %',sc.actual],['Earned %',sc.earned]].filter(x=>x[1]&&x[1].some(v=>v!=null))
+      .map(x=>({name:x[0],labels:sc.labels,values:sc.labels.map((l,i)=>x[1][i]==null?null:+(x[1][i]/100).toFixed(4))}));
+    const cols=ser.map(x=>x.name==='Planned %'?RP.teal:x.name==='Actual %'?RP.gold:RP.earn);
+    let li=-1; (sc.earned||sc.actual||[]).forEach((v,i)=>{ if(v!=null) li=i; });
+    if(li>=0){
+      const f=a=>a&&a[li]!=null?Math.round(a[li])+'%':'\u2014';
+      s.addText('Latest ('+sc.labels[li]+'):  Planned '+f(sc.planned)+'   \u00B7   Actual '+f(sc.actual)+'   \u00B7   Earned '+f(sc.earned),
+        {x:sx+sw-5.2,y:ly+0.1,w:5.0,h:0.36,fontFace:RP_F,fontSize:10.5,color:RP.muted,align:'right',margin:0,isTextBox:true,valign:'middle'});
+    }
+    meta.push({kind:'sc',w:sw-1.0,n:sc.labels.length,fs:8});
+    s.addChart(pres.charts.LINE,ser,{x:sx+0.1,y:ly+0.5,w:sw-0.2,h:bottom-ly-0.6,chartColors:cols,lineSize:2.25,lineDataSymbol:'circle',lineDataSymbolSize:5,
+      valAxisMinVal:0,valAxisMaxVal:1.1,valAxisMajorUnit:0.25,valAxisLabelFormatCode:'0%',showValue:true,dataLabelFormatCode:'0%',dataLabelFontSize:8,valAxisLabelFontSize:10,valAxisLabelColor:RP.muted,valAxisLabelFontFace:RP_F,
+      catAxisLabelFontSize:9.5,catAxisLabelColor:RP.muted,catAxisLabelFontFace:RP_F,catAxisLabelRotate:-45,
+      valGridLine:{color:'E6E1D6',size:0.5},catGridLine:{style:'none'},displayBlanksAs:'gap',
+      showLegend:true,legendPos:'b',legendFontSize:10.5,legendFontFace:RP_F});
+  } else {
+    s.addText('No S-Curve data in this project\u2019s sheet yet.',{x:sx,y:ly+1.8,w:sw,h:0.5,fontFace:RP_F,fontSize:12,color:RP.muted,align:'center',isTextBox:true});
+  }
+  if(remark){
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:M,y:6.52,w:CW,h:0.5,fill:{color:'5BB8D0'},line:{color:'3E97AE',width:0.75},rectRadius:0.06});
+    s.addText(remark,{x:M+0.2,y:6.52,w:CW-0.4,h:0.5,fontFace:RP_F,fontSize:14,bold:true,color:RP.ink,align:'center',valign:'middle',margin:0,isTextBox:true,fit:'shrink'});
+  }
+
+  /* ================= Executive View (all projects, same on every report) ================= */
+  s=slide('Executive View');
+  s.addText('All projects \u2014 progress, schedule, cost and S-curve at a glance',{x:M,y:0.62,w:8,h:0.24,fontFace:RP_F,fontSize:10,color:RP.muted,margin:0,isTextBox:true});
+  const xl=(window.__execList?window.__execList():[]);
+  const bw2=(CW-0.2)/2, bh2=(6.98-0.95-0.2)/2;
+  xl.slice(0,4).forEach((p,pi)=>{
+    const bx=M+(pi%2)*(bw2+0.2), by=0.95+Math.floor(pi/2)*(bh2+0.2), pd=p.data, has=!!(pd&&pd.rows&&pd.rows.length);
+    card(s,bx,by,bw2,bh2);
+    s.addText(p.name,{x:bx+0.15,y:by+0.08,w:bw2-1.8,h:0.34,fontFace:RP_F,fontSize:14,bold:true,color:RP.deep,margin:0,isTextBox:true,valign:'middle'});
+    const pill=!has?['Not connected','ECE8DF',RP.muted]:p.cls==='ok'?['Live','DDF3E1',RP.good]:p.builtin&&!p.live?['Built-in data','F6EBCD','8A6A12']:['Partly live','F6EBCD','8A6A12'];
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:bx+bw2-1.45,y:by+0.12,w:1.3,h:0.27,fill:{color:pill[1]},line:{color:pill[1]},rectRadius:0.12});
+    s.addText(pill[0],{x:bx+bw2-1.45,y:by+0.12,w:1.3,h:0.27,fontFace:RP_F,fontSize:9,bold:true,color:pill[2],align:'center',valign:'middle',margin:0,isTextBox:true});
+    if(!has){
+      s.addText('No data yet \u2014 connect this project\u2019s Google Sheet on the Database Sync tab.',{x:bx+0.3,y:by+bh2/2-0.3,w:bw2-0.6,h:0.6,fontFace:RP_F,fontSize:11,color:RP.muted,align:'center',valign:'middle',isTextBox:true});
+      return;
+    }
+    const t=execTotals(pd), ct=window.__exAllLab?t:execCostTotals(pd);
+    const pl=t.bcost?t.pcost/t.bcost*100:0, ac=t.bcost?t.ecost/t.bcost*100:0, sp=t.pcost?t.ecost/t.pcost:0, cp=t.acost?t.ecost/t.acost:0;
+    // cost strip
+    const cw4=(bw2-0.3-3*0.08)/4;
+    [['Budgeted cost',ct.bcost],['Planned cost',ct.pcost],['Earned cost',ct.ecost],['Actual cost',ct.acost]].forEach((c,i)=>{
+      const cx=bx+0.15+i*(cw4+0.08), cy=by+0.5;
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cx,y:cy,w:cw4,h:0.5,fill:{color:RP.bg},line:{color:'EAE5DA',width:0.5},rectRadius:0.05});
+      s.addText(c[0],{x:cx,y:cy+0.03,w:cw4,h:0.18,fontFace:RP_F,fontSize:8.5,color:RP.muted,align:'center',margin:0,isTextBox:true,valign:'middle'});
+      s.addText([{text:mRs(c[1]),options:{bold:true,color:RP.deep,fontSize:12}},{text:i&&ct.bcost?'  '+(c[1]/ct.bcost*100).toFixed(1)+'%':'',options:{color:RP.muted,fontSize:8.5}}],
+        {x:cx,y:cy+0.21,w:cw4,h:0.26,fontFace:RP_F,align:'center',margin:0,isTextBox:true,valign:'middle'});
+    });
+    // KPI 2x2
+    const ky2=by+1.1, kh2=(bh2-1.2)/2-0.05, kw2=1.25;
+    const dtp=pd.dates||{}, dd=(dtp.plannedEnd&&dtp.expectedEnd)?daDays(dtp.plannedEnd,dtp.expectedEnd):null;
+    const cpB=cp>1.10?'Check costs':cp>=1?'Good spending':cp>=0.95?'Slightly over':cp>=0.9?'Over budget':'Overspending';
+    [['Progress %',ac.toFixed(2)+'%','Planned '+pl.toFixed(2)+'%',RP.deep],
+     ['SPI',sp.toFixed(2),sp>=1?'On schedule':((1-sp)*100).toFixed(0)+'% behind',sp>=1?RP.good:sp>=0.9?RP.warn:RP.bad],
+     ['CPI',t.acost?cp.toFixed(2):'\u2014',t.acost?cpB:'No actual cost yet',!t.acost?RP.muted:cp>=1?RP.good:cp>=0.9?RP.warn:RP.bad],
+     ['Delay',dd==null?'\u2014':dd+' days',dd==null?'Finish dates not set':'Finish '+fmtDate(dtp.expectedEnd),dd==null?RP.muted:dd>0?RP.bad:RP.good]
+    ].forEach((k,i)=>{ const kx=bx+0.15+(i%2)*(kw2+0.08), kyy=ky2+Math.floor(i/2)*(kh2+0.08);
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:kx,y:kyy,w:kw2,h:kh2,fill:{color:RP.bg},line:{color:'EAE5DA',width:0.5},rectRadius:0.05});
+      s.addText(k[0],{x:kx,y:kyy+0.05,w:kw2,h:0.2,fontFace:RP_F,fontSize:9,color:RP.muted,align:'center',margin:0,isTextBox:true,valign:'middle'});
+      s.addText(k[1],{x:kx,y:kyy+0.25,w:kw2,h:kh2-0.5,fontFace:RP_F,fontSize:17,bold:true,color:k[3],align:'center',margin:0,isTextBox:true,valign:'middle'});
+      s.addText(k[2],{x:kx+0.03,y:kyy+kh2-0.25,w:kw2-0.06,h:0.2,fontFace:RP_F,fontSize:8,color:RP.muted,align:'center',margin:0,isTextBox:true,valign:'middle',fit:'shrink'});
+    });
+    // S-curve
+    const psc=pd.scurve||{labels:[]}, scx=bx+0.15+2*kw2+0.2, scw=bx+bw2-0.1-scx;
+    if(psc.labels && psc.labels.length>1){
+      const ser=[['Planned',psc.planned],['Actual',psc.actual],['Earned',psc.earned]].filter(x=>x[1]&&x[1].some(v=>v!=null))
+        .map(x=>({name:x[0],labels:psc.labels,values:psc.labels.map((l,i)=>x[1][i]==null?null:+(x[1][i]/100).toFixed(4))}));
+      meta.push({kind:'sc',w:scw-0.5,n:psc.labels.length,fs:7});
+      s.addChart(pres.charts.LINE,ser,{x:scx,y:by+1.08,w:scw,h:bh2-1.13,chartColors:ser.map(x=>x.name==='Planned'?RP.teal:x.name==='Actual'?RP.gold:RP.earn),
+        lineSize:1.75,lineDataSymbol:'circle',lineDataSymbolSize:3,valAxisMinVal:0,valAxisMaxVal:1.1,valAxisMajorUnit:0.25,valAxisLabelFormatCode:'0%',showValue:true,dataLabelFormatCode:'0%',dataLabelFontSize:8,valAxisLabelFontSize:8,valAxisLabelColor:RP.muted,
+        catAxisLabelFontSize:8,catAxisLabelColor:RP.muted,catAxisLabelRotate:-45,catAxisLabelFrequency:Math.max(1,Math.ceil(psc.labels.length/9)),valGridLine:{color:'E6E1D6',size:0.5},catGridLine:{style:'none'},displayBlanksAs:'gap',
+        showLegend:true,legendPos:'b',legendFontSize:8.5,legendFontFace:RP_F});
+    } else s.addText('No S-Curve tab in this project\u2019s sheet.',{x:scx,y:by+1.6,w:scw,h:0.5,fontFace:RP_F,fontSize:10,color:RP.muted,align:'center',isTextBox:true});
+  });
+  if(!window.__exAllLab) s.addText('Cost boxes leave out Plumbing and Finishing labour, same as the Executive View.',{x:3.2,y:7.14,w:SW-6.4,h:0.25,fontFace:RP_F,fontSize:8.5,italic:true,color:RP.muted,align:'center',margin:0,isTextBox:true});
+
+  /* ================= slide 2: cost & units summary ================= */
+  s=slide('Cost & Units Summary');
+  const all=d.rows.reduce((t,r)=>add(t,r),blank());
+  const sumRow=(y,label,vals,rs)=>{
+    s.addText(label,{x:M,y:y,w:1.25,h:0.82,fontFace:RP_F,fontSize:13,bold:true,color:RP.deep,margin:0,isTextBox:true,valign:'middle'});
+    const bw=(CW-1.25-5*0.12)/6;
+    vals.forEach((v,i)=>{ const x=M+1.25+i*(bw+0.12);
+      card(s,x,y,bw,0.82);
+      s.addText(v[0],{x:x+0.05,y:y+0.06,w:bw-0.1,h:0.26,fontFace:RP_F,fontSize:10,color:RP.muted,align:'center',margin:0,isTextBox:true,valign:'middle'});
+      s.addText((rs&&v[1]!==0?'Rs ':'')+cvFmt(v[1]),{x:x+0.05,y:y+0.32,w:bw-0.1,h:0.44,fontFace:RP_F,fontSize:20,bold:true,color:v[2]||RP.deep,align:'center',margin:0,isTextBox:true,valign:'middle'});
+    });
+  };
+  sumRow(0.85,'Cost (Overall)',[['Budgeted Cost',all.bcost],['Planned Cost',all.pcost],['Earned Cost',all.ecost],['Actual Cost',all.acost],
+    ['Variance (Planned \u2212 Earned)',all.pcost-all.ecost],['Remaining Cost (Budget \u2212 Actual)',all.bcost-all.acost]],true);
+  sumRow(1.8,'Units (Overall)',[['Budgeted Units',all.bqty],['Planned Units',all.pqty],['Earned Units',all.eqty],['Actual Units',all.aqty],
+    ['Variance (Planned \u2212 Earned)',all.pqty-all.eqty],['Remaining Units (Budget \u2212 Earned)',all.bqty-all.eqty]],false);
+  const cat=new Map();
+  d.rows.filter(r=>rpKeep(d,r)).forEach(r=>{ const k=d.depts[r[IDX.dept]]; if(!cat.has(k)) cat.set(k,blank()); add(cat.get(k),r); });
+  const names=[...cat.keys()].sort((a,b)=>{const i=ORDER.indexOf(a),j=ORDER.indexOf(b);return (i<0?99:i)-(j<0?99:j)||a.localeCompare(b);});
+  const line=(n,t,o)=>[tc(n,Object.assign({align:'left',bold:true},o)),tc(nf0(t.bcost),o),tc(nf0(t.pcost),o),tc(nf0(t.ecost),o),tc(nf0(t.acost),o),dotCell(t.ecost-t.acost,o),
+    tc(nf0(t.bqty),o),tc(nf0(t.pqty),o),tc(nf0(t.eqty),o),tc(nf0(t.aqty),o),dotCell(t.eqty-t.aqty,o)];
+  const cRows=[[hc('Main Category'),hc('Budgeted Cost'),hc('Planned Cost'),hc('Earned Value'),hc('Actual Cost'),hc('Saving Cost'),
+                hc('Budgeted Units'),hc('Planned Units'),hc('Earned Units'),hc('Actual Units'),hc('Saved Units')]];
+  names.forEach((n,i)=>cRows.push(line(n,cat.get(n),i%2?{fill:{color:RP.alt}}:{fill:{color:RP.card}})));
+  cRows.push(line('Total',rep,{bold:true,fill:{color:RP.tot}}));
+  const cy=2.85, crh=Math.min(0.4,(6.72-cy)/cRows.length);
+  s.addTable(cRows,TB({x:M,y:cy,w:CW,colW:[1.43].concat(Array(10).fill((CW-1.43)/10)),rowH:crh,fontSize:10.5}));
+  s.addText('Category table leaves out Plumbing and Finishing labour (no unit of measure), same as the dashboard. Saving = earned \u2212 actual.',
+    {x:M,y:cy+crh*cRows.length+0.08,w:CW,h:0.28,fontFace:RP_F,fontSize:9,italic:true,color:RP.muted,margin:0,isTextBox:true});
+
+  /* ================= Cost View + Units View (same boxes as those tabs) ================= */
+  const byD=new Map(); d.rows.forEach(r=>{ const k=d.depts[r[IDX.dept]]; if(!byD.has(k)) byD.set(k,blank()); add(byD.get(k),r); });
+  const knownC=CV_CATS.map(c=>c[0]);
+  const cvList=[...byD.keys()].filter(k=>knownC.indexOf(k)<0)
+    .sort((a,b)=>{const i=ORDER.indexOf(a),j=ORDER.indexOf(b);return (i<0?99:i)-(j<0?99:j)||a.localeCompare(b);}).map(k=>[k,byD.get(k)]);
+  CV_CATS.forEach(([k,l])=>{ if(byD.has(k)) cvList.push([l,byD.get(k)]); });
+  [['cost','Cost View',['bcost','pcost','ecost','acost'],['Budgeted Cost','Planned Cost','Earned Cost','Actual Cost','Variance','Project Remaining Cost'],'Cost',3],
+   ['unit','Units View',['bqty','pqty','eqty','aqty'],['Budgeted Units','Planned Units','Earned Units','Actual Units','Variance','Project Remaining Units'],'Units',2]]
+  .forEach(([mode,title,K,L,what,remI])=>{
+    const vs=slide(title);
+    const nRows=cvList.length+1, bandH=0.36, gapR=0.08;
+    const rh=Math.min(0.78,(6.98-0.85-2*bandH-0.2-gapR*nRows)/nRows);
+    const nameW=1.7, bwc=(CW-nameW-0.12-5*0.1)/6;
+    const band=(txt,y)=>{ vs.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:M,y:y,w:CW,h:bandH,fill:{color:RP.card},line:{color:RP.teal,width:1},rectRadius:0.1});
+      vs.addText(txt,{x:M,y:y,w:CW,h:bandH,fontFace:RP_F,fontSize:15,bold:true,color:RP.teal,align:'center',valign:'middle',margin:0,isTextBox:true}); };
+    const row=(name,t,y,overall)=>{
+      vs.addShape(pres.shapes.RECTANGLE,{x:M,y:y,w:nameW,h:rh,fill:{color:overall?RP.soft:'EDEAE2'},line:{color:overall?RP.soft:'EDEAE2'}});
+      vs.addText(name,{x:M,y:y,w:nameW,h:rh,fontFace:RP_F,fontSize:14,bold:true,color:RP.ink,align:'center',valign:'middle',margin:0,isTextBox:true,fit:'shrink'});
+      const variance=t[K[1]]-t[K[2]], remain=t[K[0]]-t[K[remI]];
+      const vals=[[t[K[0]],0],[t[K[1]],t[K[0]]],[t[K[2]],t[K[0]]],[t[K[3]],t[K[0]]],[variance,-1],[remain,t[K[0]]]];
+      vals.forEach((v,i)=>{ const x=M+nameW+0.12+i*(bwc+0.1);
+        vs.addShape(pres.shapes.RECTANGLE,{x:x,y:y,w:bwc,h:rh,fill:{color:overall?'F3F7F6':'FBFAF6'},line:{color:'E6E1D6',width:0.5}});
+        vs.addText(L[i],{x:x,y:y+0.03,w:bwc,h:0.2,fontFace:RP_F,fontSize:9.5,bold:true,color:RP.ink,align:'center',valign:'middle',margin:0,isTextBox:true});
+        const neg=i===4&&variance>0.5;
+        vs.addText(cvFmt(v[0]),{x:x,y:y+0.21,w:bwc,h:rh-(rh>0.6?0.4:0.24),fontFace:RP_F,fontSize:rh>0.6?20:16,color:neg?RP.bad:RP.ink,align:'center',valign:'middle',margin:0,isTextBox:true});
+        const sub= i===4 ? (variance>0.5?'behind plan':variance<-0.5?'ahead of plan':'') : (v[1]>0?(v[0]/v[1]*100).toFixed(1)+'% of budget':'');
+        if(rh>0.6 && sub) vs.addText(sub,{x:x,y:y+rh-0.2,w:bwc,h:0.17,fontFace:RP_F,fontSize:8,color:RP.muted,align:'center',valign:'middle',margin:0,isTextBox:true});
+      });
+    };
+    let yy=0.85; band(what+' Summary (Overall)',yy); yy+=bandH+0.08;
+    row('OverAll',byD.size?[...byD.values()].reduce((a,t)=>add(a,[0,0,0,0,0,t.bcost,t.pcost,t.ecost,t.acost,t.bqty,t.pqty,t.eqty,t.aqty]),blank()):blank(),yy,true);
+    yy+=rh+0.12; band('Category Wise '+what+' Summary',yy); yy+=bandH+0.08;
+    cvList.forEach(([n,t])=>{ row(n,t,yy,false); yy+=rh+gapR; });
+    vs.addText('Variance = planned \u2212 earned.  Remaining = budget \u2212 '+(mode==='cost'?'actual':'earned')+'.  All resources included (as in the '+title+' tab, no filters).',
+      {x:3.2,y:7.14,w:SW-6.4,h:0.25,fontFace:RP_F,fontSize:8.5,italic:true,color:RP.muted,align:'center',margin:0,isTextBox:true});
+  });
+
+  /* ================= slides 3+: major items (Grey / MEP / Finishing) ================= */
+  const top=0.85, lim=7.0;
+  const mCols=[2.3].concat(Array(10).fill((CW-2.3)/10));
+  const mHead=g=>[hc(g,{align:'left'}),hc('Budgeted Cost'),hc('Planned Cost'),hc('Earned Value'),hc('Actual Cost'),hc('Saving Cost'),
+                  hc('Budgeted Units'),hc('Planned Units'),hc('Earned Units'),hc('Actual Units'),hc('Saved Units')];
+  const mLine=(r,o)=>[tc(r.name,Object.assign({align:'left'},o)),tc(nf0(r.bcost),o),tc(nf0(r.pcost),o),tc(nf0(r.ecost),o),tc(nf0(r.acost),o),dotCell(r.scost,o),
+                      tc(nf0(r.bqty),o),tc(nf0(r.pqty),o),tc(nf0(r.eqty),o),tc(nf0(r.aqty),o),dotCell(r.squ,o)];
+  const sumOf=list=>list.reduce((a,r)=>{ ['bcost','pcost','ecost','acost','scost','bqty','pqty','eqty','aqty','squ'].forEach(k=>a[k]=(a[k]||0)+r[k]); return a; },{});
+  const grpRows=[];
+  dtGroups(d).forEach(g=>{ const rows=dtAgg(d,g); if(!rows.length) return; rows.sort((a,b)=>(b.ecost-a.ecost)||(b.bcost-a.bcost)); grpRows.push([g.name,rows]); });
+  const makeBlocks=n=>grpRows.map(([gname,rows])=>{
+    const shown=rows.slice(0,n), rest=rows.slice(n), tr=[mHead(gname)];
+    shown.forEach((r,i)=>tr.push(mLine(r,{fill:{color:i%2?RP.alt:RP.card}})));
+    if(rest.length) tr.push(mLine(Object.assign({name:'Other items ('+rest.length+')'},sumOf(rest)),{italic:true,color:RP.muted,fill:{color:shown.length%2?RP.alt:RP.card}}));
+    tr.push(mLine(Object.assign({name:'Total'},sumOf(rows)),{bold:true,fill:{color:RP.tot}}));
+    return {rows:tr,more:rest.length};
+  });
+  /* keep all groups on ONE slide when possible (fewer rows per group); otherwise continue on a second slide */
+  let TOPN=8, RH=0.25, GAP=0.22, blocks=makeBlocks(8);
+  for(const n of [8,7,6,5]){
+    const bl=makeBlocks(n), h=bl.reduce((a,b)=>a+b.rows.length,0)*0.22+(bl.length-1)*0.16;
+    if(h<=lim-top){ TOPN=n; RH=0.22; GAP=0.16; blocks=bl; break; }
+  }
+  let y=lim+1, ms=null, cont=false;
+  blocks.forEach(b=>{
+    const h=b.rows.length*RH;
+    if(!ms || y+h>lim){ ms=slide('Major Items'+(cont?' (continued)':'')); cont=true; y=top;
+      if(blocks.some(x=>x.more)) ms.addText('Largest '+TOPN+' items per group by earned value; the rest are added together in \u201cOther items\u201d. Totals include every item.',
+        {x:3.2,y:7.14,w:SW-6.4,h:0.25,fontFace:RP_F,fontSize:8.5,italic:true,color:RP.muted,align:'center',margin:0,isTextBox:true}); }
+    ms.addTable(b.rows,TB({x:M,y:y,w:CW,colW:mCols,rowH:RH,fontSize:9.5}));
+    y+=h+GAP;
+  });
+
+  /* ================= floor-wise progress ================= */
+  const fl=new Map();
+  d.rows.filter(r=>rpKeep(d,r)).forEach(r=>{
+    const dep=d.depts[r[IDX.dept]], gi=groups.findIndex(g=>g[1].indexOf(dep)>=0); if(gi<0) return;
+    const f=d.flrs[r[IDX.flr]]; if(!fl.has(f)) fl.set(f,groups.map(()=>blank())); add(fl.get(f)[gi],r);
+  });
+  const floors=[...fl.keys()].filter(f=>fl.get(f).some(t=>t.bcost>0))
+    .sort((a,b)=>(rpFloorRank(a)-rpFloorRank(b))||String(a).localeCompare(String(b)));
+  if(floors.length){
+    s=slide('Floor Wise Progress');
+    const G=groups.length, fcell=(t,o)=>{ if(!t.bcost) return [tc('\u2014',Object.assign({align:'center',color:RP.muted},o)),tc('\u2014',Object.assign({align:'center',color:RP.muted},o))];
+      const p=t.pcost/t.bcost*100, a=t.ecost/t.bcost*100, col=p<=0&&a<=0?RP.ink:a+0.05>=p?RP.good:RP.bad;
+      return [tc(rpPct(p),Object.assign({align:'center'},o)),tc(rpPct(a),Object.assign({align:'center',bold:true,color:col},o))]; };
+    const head1=[hc('Floor',{rowspan:2,align:'left'})].concat(groups.map(g=>hc(g[0],{colspan:2})));
+    const head2=[]; groups.forEach(()=>{ head2.push(hc('Planned %',{fontSize:9.5})); head2.push(hc('Actual %',{fontSize:9.5})); });
+    const fRow=(label,ts,o)=>[tc(label,Object.assign({align:'left',bold:true},o))].concat(...ts.map(t=>fcell(t,o)));
+    const totals=groups.map((g,gi)=>floors.reduce((a,f)=>add(a,[0,0,0,0,0,fl.get(f)[gi].bcost,fl.get(f)[gi].pcost,fl.get(f)[gi].ecost,fl.get(f)[gi].acost,0,0,0,0]),blank()));
+    const body=floors.map((f,i)=>fRow(rpFloorLabel(f),fl.get(f),{fill:{color:i%2?RP.alt:RP.card}}));
+    const split=body.length>16 ? Math.ceil((body.length+1)/2) : body.length+1;   // two tables side by side when the list is long
+    const parts=split>body.length ? [body] : [body.slice(0,split), body.slice(split)];
+    parts[parts.length-1]=parts[parts.length-1].concat([fRow('Overall',totals,{fill:{color:RP.tot}})]);
+    const tw=parts.length>1 ? (CW-0.3)/2 : Math.min(CW, 2.3+G*2*1.15);
+    const fw=parts.length>1 ? 1.55 : 2.3, gw=(tw-fw)/(G*2);
+    const maxRows=Math.max(...parts.map(p=>p.length))+2, frh=Math.min(0.34,(6.75-top)/maxRows);
+    parts.forEach((p,pi)=>s.addTable([head1,head2].concat(p),TB({x:M+pi*(tw+0.3),y:top,w:tw,colW:[fw].concat(Array(G*2).fill(gw)),rowH:frh,fontSize:frh<0.26?9.5:10.5})));
+    s.addText('Planned % = planned cost \u00F7 budgeted cost, Actual % = earned value \u00F7 budgeted cost, per floor. Green: at or ahead of plan \u00B7 Red: behind plan.',
+      {x:M,y:6.84,w:CW,h:0.26,fontFace:RP_F,fontSize:9,italic:true,color:RP.muted,margin:0,isTextBox:true});
+  }
+
+  /* ================= activity summary & delayed activities ================= */
+  s=slide('Activity Summary & Delayed Activities');
+  if(d.acts && d.acts.length){
+    const t0=new Date(), td=t0.getFullYear()+'-'+String(t0.getMonth()+1).padStart(2,'0')+'-'+String(t0.getDate()).padStart(2,'0');
+    const asOf=d.acts.dataDate||td, R=daCompute(d,asOf,{});
+    let cp=0, ip=0, ns=0; d.acts.forEach(a=>{ const st=daStatus(a,asOf)[0]; if(st==='cp') cp++; else if(st==='ip') ip++; else ns++; });
+    const sw6=(CW-5*0.14)/6;
+    [['Total Activities',d.acts.length,RP.deep,RP.card],['Completed',cp,RP.deep,'D6EEF5'],['In Progress',ip,RP.deep,'DDF3E1'],
+     ['Not Started',ns,RP.deep,RP.card],['Delayed Activities',R.total,RP.bad,'F8DEDA'],['Critical & Delayed',R.crit,RP.bad,'F8DEDA']]
+    .forEach((k,i)=>{ const x=M+i*(sw6+0.14);
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:x,y:0.85,w:sw6,h:0.95,fill:{color:k[3]},line:{color:RP.line,width:0.75},rectRadius:0.08,shadow:shadow()});
+      s.addText(k[0],{x:x,y:0.9,w:sw6,h:0.3,fontFace:RP_F,fontSize:11,bold:true,color:RP.ink,align:'center',margin:0,isTextBox:true,valign:'middle'});
+      s.addText(nf0(k[1]),{x:x,y:1.2,w:sw6,h:0.52,fontFace:RP_F,fontSize:24,bold:true,color:k[2],align:'center',margin:0,isTextBox:true,valign:'middle'}); });
+    const list=[]; DA_GROUPS.forEach(g=>R.groups[g].forEach(a=>list.push(Object.assign({grp:g},a))));
+    list.sort((a,b)=>(b.crit-a.crit)||(b.delay-a.delay)||a.id.localeCompare(b.id));
+    const MAXA=14, shown=list.slice(0,MAXA);
+    s.addText('Delayed activities as of '+daFmt(asOf)+(list.length>MAXA?'  \u2014  top '+MAXA+' of '+list.length+' (critical first, then longest delay)':''),
+      {x:M,y:1.98,w:CW,h:0.32,fontFace:RP_F,fontSize:13,bold:true,color:RP.deep,margin:0,isTextBox:true,valign:'middle'});
+    const aRows=[[hc('#'),hc('Group'),hc('Activity ID'),hc('Criticality'),hc('Activity Name',{align:'left'}),hc('Planned Start'),hc('Planned Finish'),
+                  hc('Start'),hc('Finish'),hc('Delay Days'),hc('Status'),hc('Actual %')]];
+    shown.forEach((a,i)=>{ const o={align:'center',fill:{color:i%2?RP.alt:RP.card}};
+      const dc=a.delay>=30?'F25555':a.delay>=15?'F58A5B':'F7B267';
+      aRows.push([tc(i+1,o),tc(a.grp,o),tc(a.id,Object.assign({},o,{align:'left'})),tc(a.crit?'Critical':'-',Object.assign({},o,a.crit?{color:'D0413A',bold:true}:{})),
+        tc(a.name,Object.assign({},o,{align:'left'})),tc(daFmt(a.ps),o),tc(daFmt(a.pf),o),tc(daFmt(a.s)+(a.sA?' A':''),o),tc(daFmt(a.f)+(a.fA?' A':''),o),
+        tc(a.delay,Object.assign({},o,{bold:true,fill:{color:dc},color:a.delay>=15?'FFFFFF':'3A2A10'})),tc(a._st[1],o),tc(a.ap==null?'\u2014':Math.round(a.ap)+'%',o)]); });
+    if(!shown.length) aRows.push([{text:'No delayed activities \u2714',options:{colspan:12,align:'center',color:RP.muted}}]);
+    const arh=Math.min(0.32,(6.95-2.4)/aRows.length);
+    s.addTable(aRows,TB({x:M,y:2.4,w:CW,colW:[0.4,0.8,1.25,0.8,3.18,1.0,1.0,0.95,0.95,0.6,0.95,0.65],rowH:arh,fontSize:9.5}));
+  } else {
+    card(s,M+2.5,2.4,CW-5,2.2);
+    s.addText([{text:'Activity list not loaded for this project',options:{bold:true,fontSize:16,color:RP.deep,breakLine:true}},
+               {text:'This slide reads the \u201cActivity Data\u201d tab of the project\u2019s Google Sheet. Connect or refresh the sheet on the Database Sync tab and download the report again.',options:{fontSize:12,color:RP.muted}}],
+      {x:M+2.8,y:2.6,w:CW-5.6,h:1.8,fontFace:RP_F,align:'center',valign:'middle',isTextBox:true,paraSpaceAfter:8});
+  }
+  return pres;
+}
+/* S-curve data labels like the dashboard: planned below the line, earned above it (white box with a coloured
+   border), thinned so they do not overlap; the actual line carries no labels (it sits on top of earned) */
+async function rpFixCharts(zip, meta){
+  const files=Object.keys(zip.files).filter(f=>/^ppt\/charts\/chart\d+\.xml$/.test(f))
+    .sort((a,b)=>(+a.match(/(\d+)\.xml$/)[1])-(+b.match(/(\d+)\.xml$/)[1]));
+  for(let k=0;k<files.length;k++){
+    const m=meta[k]; let x=await zip.file(files[k]).async('string');
+    x=x.replace(/<c:pt idx="\d+"><c:v><\/c:v><\/c:pt>/g,'');           // empty points = gap (no zero values)
+    if(!m || m.kind!=='sc'){ zip.file(files[k],x); continue; }
+    const cap=Math.max(3,Math.floor(m.w/(m.fs>=8?0.42:0.5))), step=Math.max(1,Math.ceil(m.n/cap));
+    const lastOf=ser=>{ let l=-1; (ser.match(/<c:val>[\s\S]*<\/c:val>/)||[''])[0].replace(/<c:pt idx="(\d+)">/g,(a,i)=>{ l=Math.max(l,+i); return a; }); return l; };
+    const sers=x.match(/<c:ser>[\s\S]*?<\/c:ser>/g)||[];
+    const earnedLast=(()=>{ const e=sers.find(z=>/<c:v>Earned/.test(z)); return e?lastOf(e):-1; })();
+    sers.forEach(ser=>{
+      const nm=((ser.match(/<c:tx>[\s\S]*?<c:v>([^<]*)<\/c:v>/)||[])[1]||'');
+      let dl;
+      if(/^Actual/.test(nm)) dl='<c:dLbls><c:delete val="1"/></c:dLbls>';
+      else{
+        const planned=/^Planned/.test(nm), col=planned?RP.teal:RP.earn, last=lastOf(ser), del=[];
+        for(let i=0;i<m.n;i++){
+          const keep=i%step===0 || i===last;
+          if(!keep || i>last) del.push('<c:dLbl><c:idx val="'+i+'"/><c:delete val="1"/></c:dLbl>');
+        }
+        dl='<c:dLbls>'+del.join('')+'<c:numFmt formatCode="0%" sourceLinked="0"/>'
+          +'<c:spPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="9525"><a:solidFill><a:srgbClr val="'+col+'"/></a:solidFill></a:ln></c:spPr>'
+          +'<c:txPr><a:bodyPr wrap="none" lIns="19050" tIns="0" rIns="19050" bIns="0"/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="'+(m.fs*100)+'" b="1"><a:solidFill><a:srgbClr val="'+col+'"/></a:solidFill><a:latin typeface="Calibri"/></a:defRPr></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>'
+          +'<c:dLblPos val="'+(planned?'b':'t')+'"/><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/><c:showLeaderLines val="0"/>'
+          +'<c:extLst><c:ext uri="{CE6537A1-D6FC-4f65-9D91-7224C49458BB}" xmlns:c15="http://schemas.microsoft.com/office/drawing/2012/chart"><c15:spPr xmlns:c15="http://schemas.microsoft.com/office/drawing/2012/chart"><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></c15:spPr></c:ext></c:extLst>'
+          +'</c:dLbls>';
+      }
+      const fixed=/<c:dLbls>[\s\S]*?<\/c:dLbls>/.test(ser) ? ser.replace(/<c:dLbls>[\s\S]*?<\/c:dLbls>/,dl) : ser.replace('<c:marker>',dl+'<c:marker>');
+      x=x.replace(ser,fixed);
+    });
+    zip.file(files[k],x);
+  }
+}
+async function rpPackage(pres){
+  if(!window.JSZip) return null;
+  const zip=await window.JSZip.loadAsync(await pres.write({outputType:'arraybuffer'}));
+  await rpFixCharts(zip,pres._rpMeta||[]);
+  return zip;
+}
+async function rpDownload(pid, btn){
+  const it=(window.__execList?window.__execList():[]).find(x=>x.pid===pid);
+  if(!it || !it.data || !it.data.rows || !it.data.rows.length){ alert('No data connected for '+((it&&it.name)||pid)+' yet. Connect its Google Sheet on the Database Sync tab first.'); return; }
+  const old=btn?btn.innerHTML:''; if(btn){ btn.disabled=true; btn.textContent='Preparing\u2026'; }
+  try{
+    await rpLoadLib();
+    const remEl=document.getElementById('rp-rem-'+pid), remark=remEl?remEl.value:'';
+    const pres=rpBuild(it,{remark:remark});
+    const n=new Date(), stamp=String(n.getDate()).padStart(2,'0')+'-'+MON[n.getMonth()]+'-'+n.getFullYear();
+    const fileName=(it.name+' Report '+stamp).replace(/[^\w-]+/g,'_')+'.pptx';
+    const zip=await rpPackage(pres);
+    if(!zip){ await pres.writeFile({fileName:fileName}); }
+    else{
+      const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',compression:'DEFLATE'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fileName; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000);
+    }
+  }catch(e){
+    alert('The PowerPoint report could not be made: '+(e&&e.message||e)+'\n\nCheck the internet connection and try again.');
+  }finally{ if(btn){ btn.disabled=false; btn.innerHTML=old; } }
+}
+
+/* ---------- Report tab UI: one card per project with a Download button ---------- */
+const RP_PROJ=['v3','v4','elev'];
+function renderReport(){
+  const host=document.getElementById('rp-host'); if(!host) return;
+  const allowed=pid=> !window.__tabAllowed || window.__tabAllowed(pid);
+  const list=(window.__execList?window.__execList():[]);
+  const keepRem={}; host.querySelectorAll('textarea[data-rprem]').forEach(t=>keepRem[t.dataset.rprem]=t.value);
+  const cards=RP_PROJ.filter(allowed).map(pid=>{
+    const it=list.find(x=>x.pid===pid)||{pid:pid,name:DT_PROJ[pid]||pid};
+    const d=it.data, has=!!(d&&d.rows&&d.rows.length);
+    const pill=!has?['off','Not connected']:it.cls==='ok'?['ok','Live']:it.builtin&&!it.live?['warn','Built-in data']:['warn','Partly live'];
+    let stats='';
+    if(has){
+      const t=d.rows.reduce((a,r)=>add(a,r),blank());
+      const ep=t.bcost?t.ecost/t.bcost*100:0, pp=t.bcost?t.pcost/t.bcost*100:0, sp=t.pcost?t.ecost/t.pcost:0;
+      const dt=d.dates||{}, dl=(dt.plannedEnd&&dt.expectedEnd)?daDays(dt.plannedEnd,dt.expectedEnd):null;
+      stats='<div class="rp-stats">'
+        +'<div><span>Progress</span><b>'+ep.toFixed(2)+'%</b><small>planned '+pp.toFixed(2)+'%</small></div>'
+        +'<div><span>SPI</span><b class="'+(sp>=1?'good':sp>=0.9?'warn':'bad')+'">'+sp.toFixed(2)+'</b><small>'+(sp>=1?'on schedule':((1-sp)*100).toFixed(0)+'% behind')+'</small></div>'
+        +'<div><span>Delay</span><b class="'+(dl==null?'':dl>0?'bad':'good')+'">'+(dl==null?'\u2014':dl+' d')+'</b><small>'+(d.acts&&d.acts.length?d.acts.length+' activities':'no activity list')+'</small></div>'
+        +'</div>';
+    } else stats='<p class="rp-empty">Connect this project\u2019s Google Sheet on the Database Sync tab to make its report.</p>';
+    let rem=keepRem[pid]; if(rem==null){ try{ rem=localStorage.getItem('rpRem-'+pid)||''; }catch(e){ rem=''; } }
+    return '<div class="card rp-card'+(has?'':' is-empty')+'">'
+      +'<div class="rp-head"><h2>'+esc(it.name||DT_PROJ[pid])+'</h2><span class="ex-pill '+pill[0]+'">'+pill[1]+'</span></div>'
+      +stats
+      +'<label class="rp-lbl" for="rp-rem-'+pid+'">Remark on the first slide (optional)</label>'
+      +'<textarea id="rp-rem-'+pid+'" data-rprem="'+pid+'" rows="2" placeholder="e.g. The total saving from Pile to B1 works is approximately 49 Million."'+(has?'':' disabled')+'>'+esc(rem)+'</textarea>'
+      +'<button class="btn rp-btn" type="button" data-rpdl="'+pid+'"'+(has?'':' disabled')+'>\u2B07 Download PowerPoint</button>'
+      +'</div>';
+  });
+  host.innerHTML=cards.length ? '<div class="rp-grid">'+cards.join('')+'</div>'
+    : '<div class="card empty-state"><div class="es-icon" aria-hidden="true">\uD83D\uDD12</div><h3>No project is open for you</h3><p>Ask the admin to add a project (V3, V4 or Elevation) to your permission.</p></div>';
+  host.querySelectorAll('textarea[data-rprem]').forEach(t=>t.addEventListener('input',()=>{ try{ localStorage.setItem('rpRem-'+t.dataset.rprem,t.value); }catch(e){} }));
+  host.querySelectorAll('[data-rpdl]').forEach(b=>b.addEventListener('click',()=>rpDownload(b.dataset.rpdl,b)));
+}
+
 function selectProject(pid, label){
   if(window.__tabAllowed && !window.__tabAllowed(pid)){ if(window.__tabDenied) window.__tabDenied(); return; }
   curProject=pid;
@@ -3421,7 +3944,7 @@ function usersSheetId(){
   return (v !== null && v !== '') ? v : ELEV_DEFAULT_ID;
 }
 
-const ALL_TABS = ['v3','v4','elev','v6','exec','detail','cost','units','delay','logs','sync','filter'];
+const ALL_TABS = ['v3','v4','elev','v6','exec','detail','cost','units','delay','report','logs','sync','filter'];
 const TAB_ALIASES = {
   v3:   ['v3','v3businesscentre','v3businesscenter','businesscentre','businesscenter','v3bc'],
   v4:   ['v4','v4grandvertical','grandvertical','v4grand','grand'],
@@ -3432,6 +3955,7 @@ const TAB_ALIASES = {
   cost: ['cost','costview','costs','costsummary'],
   units: ['units','unit','unitsview','unitview','unitssummary'],
   delay: ['delay','delays','delayed','delayedactivities','delayactivities'],
+  report: ['report','reports','newreport','pptreport','ppt','pptx','powerpoint','powerpointreport','projectreport'],
   logs: ['logs','log','refreshlogs','refreshlog','history'],
   sync: ['sync','databasesync','database','db','admin','settings','googlesheetsync'],
   filter: ['filter','monthfilter','monthsfilter','scurvefilter','months']
@@ -3451,7 +3975,7 @@ function parsePermission(raw){
    projects he is allowed. If no project is allowed, those four tabs stay closed. */
 function withDetail(t){
   if(!['v3','v4','elev','v6'].some(k=>t.indexOf(k)>=0))
-    t = t.filter(k=>['detail','cost','units','delay'].indexOf(k)<0);
+    t = t.filter(k=>['detail','cost','units','delay','report'].indexOf(k)<0);
   if(t.indexOf('sync')>=0 && t.indexOf('logs')<0) t.push('logs');   // whoever manages Database Sync also sees the logs
   return t; }
 
