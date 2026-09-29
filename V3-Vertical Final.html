@@ -2591,6 +2591,43 @@ function rpFloorRank(f){
 }
 const rpFloorLabel=f=>String(f).replace(/^(\d+\s*(st|nd|rd|th))\s*F$/i,'$1 Floor');
 
+/* Report S-curves are drawn by the SAME scurve() the dashboard uses (same labels, same month filter),
+   then turned into a picture for the slide - so the report looks exactly like the screen. */
+const RP_PX=144;                                   // px per inch, same density as the dashboard on a laptop screen
+function rpScPng(key, S, wIn, hIn, compact){
+  return new Promise(res=>{
+    try{
+      const W=Math.round(wIn*RP_PX), H=Math.round(hIn*RP_PX);
+      const host=document.createElement('div'); host.id=key;
+      host.style.cssText='position:fixed;left:-20000px;top:0;width:'+W+'px;height:'+H+'px;';
+      const sD=SC_DATA[key], sR=SC_DRAW[key];
+      document.body.appendChild(host);
+      try{ scurve(host, S, {W:W, H:H, compact:!!compact}); }
+      finally{ if(sD===undefined) delete SC_DATA[key]; else SC_DATA[key]=sD; if(sR===undefined) delete SC_DRAW[key]; else SC_DRAW[key]=sR; }
+      const svg=host.querySelector('svg'); if(!svg){ host.remove(); return res(null); }
+      const c=svg.cloneNode(true); host.remove();
+      c.setAttribute('xmlns','http://www.w3.org/2000/svg'); c.setAttribute('width',W); c.setAttribute('height',H); c.removeAttribute('style');
+      c.querySelectorAll('.sc-guide').forEach(e=>e.remove());
+      const st=document.createElementNS('http://www.w3.org/2000/svg','style');
+      st.textContent='text{font-family:"Segoe UI Variable","Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif}'+(compact?'text:not(.sc-val){fill:#1A1A1A;font-size:11.5px}':'');
+      c.insertBefore(st, c.firstChild);
+      const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c));
+      const img=new Image(), k=2;
+      img.onload=()=>{ try{ const cv=document.createElement('canvas'); cv.width=W*k; cv.height=H*k;
+          const g=cv.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,cv.width,cv.height); g.drawImage(img,0,0,cv.width,cv.height);
+          res(cv.toDataURL('image/png')); }catch(e){ res(null); } };
+      img.onerror=()=>res(null);
+      img.src=url;
+    }catch(e){ res(null); }
+  });
+}
+// legend row the dashboard shows above the curve
+function rpScLegend(s, x, y, w, fs){
+  const it=(c,t)=>[{text:'\u25CF ',options:{color:c,fontSize:fs+2}},{text:t+'     ',options:{color:RP.ink,fontSize:fs}}];
+  s.addText([].concat(it(RP.teal,'Planned'),it(RP.gold,'Actual'),it(RP.earn,'Earned')),
+    {x:x,y:y,w:w,h:0.24,fontFace:RP_F,margin:0,isTextBox:true,valign:'middle',align:'left'});
+}
+
 function rpBuild(it, opt){
   const d=it.data, name=it.name, pres=new window.PptxGenJS();
   const meta=pres._rpMeta=[];               // one entry per chart, in the order they are added (chart1.xml, chart2.xml, ...)
@@ -2689,12 +2726,20 @@ function rpBuild(it, opt){
       s.addText('Latest ('+sc.labels[li]+'):  Planned '+f(sc.planned)+'   \u00B7   Actual '+f(sc.actual)+'   \u00B7   Earned '+f(sc.earned),
         {x:sx+sw-5.2,y:ly+0.1,w:5.0,h:0.36,fontFace:RP_F,fontSize:10.5,color:RP.muted,align:'right',margin:0,isTextBox:true,valign:'middle'});
     }
+    const mKey='dash-'+it.pid, mW=sw-0.3, mH=bottom-ly-0.85;
+    if(opt&&opt.scReq) opt.scReq[mKey]={S:sc,w:mW,h:mH,compact:false};
+    const mImg=opt&&opt.scImg&&opt.scImg[mKey];
+    if(mImg){
+      rpScLegend(s,sx+0.2,ly+0.48,sw-0.4,10.5);
+      s.addImage({data:mImg.replace(/^data:/,''),x:sx+0.15,y:ly+0.75,w:mW,h:mH});
+    } else {
     meta.push({kind:'sc',w:sw-1.0,n:sc.labels.length,fs:8});
     s.addChart(pres.charts.LINE,ser,{x:sx+0.1,y:ly+0.5,w:sw-0.2,h:bottom-ly-0.6,chartColors:cols,lineSize:2.25,lineDataSymbol:'circle',lineDataSymbolSize:5,
-      valAxisMinVal:0,valAxisMaxVal:1.1,valAxisMajorUnit:0.25,valAxisLabelFormatCode:'0%',showValue:true,dataLabelFormatCode:'0%',dataLabelFontSize:8,valAxisLabelFontSize:10,valAxisLabelColor:RP.muted,valAxisLabelFontFace:RP_F,
+      valAxisMinVal:0,valAxisMaxVal:1.15,valAxisMajorUnit:0.25,valAxisLabelFormatCode:'0%',showValue:true,dataLabelFormatCode:'0%',dataLabelFontSize:8,valAxisLabelFontSize:10,valAxisLabelColor:RP.muted,valAxisLabelFontFace:RP_F,
       catAxisLabelFontSize:9.5,catAxisLabelColor:RP.muted,catAxisLabelFontFace:RP_F,catAxisLabelRotate:-45,
       valGridLine:{color:'E6E1D6',size:0.5},catGridLine:{style:'none'},displayBlanksAs:'gap',
       showLegend:true,legendPos:'b',legendFontSize:10.5,legendFontFace:RP_F});
+    }
   } else {
     s.addText('No S-Curve data in this project\u2019s sheet yet.',{x:sx,y:ly+1.8,w:sw,h:0.5,fontFace:RP_F,fontSize:12,color:RP.muted,align:'center',isTextBox:true});
   }
@@ -2749,11 +2794,19 @@ function rpBuild(it, opt){
     if(psc.labels && psc.labels.length>1){
       const ser=[['Planned',psc.planned],['Actual',psc.actual],['Earned',psc.earned]].filter(x=>x[1]&&x[1].some(v=>v!=null))
         .map(x=>({name:x[0],labels:psc.labels,values:psc.labels.map((l,i)=>x[1][i]==null?null:+(x[1][i]/100).toFixed(4))}));
+      const eKey='exsc-'+p.pid, eW=scw, eH=bh2-1.38;
+      if(opt&&opt.scReq) opt.scReq[eKey]={S:psc,w:eW,h:eH,compact:true};
+      const eImg=opt&&opt.scImg&&opt.scImg[eKey];
+      if(eImg){
+        rpScLegend(s,scx+0.05,by+1.06,scw-0.1,8.5);
+        s.addImage({data:eImg.replace(/^data:/,''),x:scx,y:by+1.3,w:eW,h:eH});
+      } else {
       meta.push({kind:'sc',w:scw-0.5,n:psc.labels.length,fs:7});
       s.addChart(pres.charts.LINE,ser,{x:scx,y:by+1.08,w:scw,h:bh2-1.13,chartColors:ser.map(x=>x.name==='Planned'?RP.teal:x.name==='Actual'?RP.gold:RP.earn),
-        lineSize:1.75,lineDataSymbol:'circle',lineDataSymbolSize:3,valAxisMinVal:0,valAxisMaxVal:1.1,valAxisMajorUnit:0.25,valAxisLabelFormatCode:'0%',showValue:true,dataLabelFormatCode:'0%',dataLabelFontSize:8,valAxisLabelFontSize:8,valAxisLabelColor:RP.muted,
+        lineSize:1.75,lineDataSymbol:'circle',lineDataSymbolSize:3,valAxisMinVal:0,valAxisMaxVal:1.15,valAxisMajorUnit:0.25,valAxisLabelFormatCode:'0%',showValue:true,dataLabelFormatCode:'0%',dataLabelFontSize:8,valAxisLabelFontSize:8,valAxisLabelColor:RP.muted,
         catAxisLabelFontSize:8,catAxisLabelColor:RP.muted,catAxisLabelRotate:-45,catAxisLabelFrequency:Math.max(1,Math.ceil(psc.labels.length/9)),valGridLine:{color:'E6E1D6',size:0.5},catGridLine:{style:'none'},displayBlanksAs:'gap',
         showLegend:true,legendPos:'b',legendFontSize:8.5,legendFontFace:RP_F});
+      }
     } else s.addText('No S-Curve tab in this project\u2019s sheet.',{x:scx,y:by+1.6,w:scw,h:0.5,fontFace:RP_F,fontSize:10,color:RP.muted,align:'center',isTextBox:true});
   });
   if(!window.__exAllLab) s.addText('Cost boxes leave out Plumbing and Finishing labour, same as the Executive View.',{x:3.2,y:7.14,w:SW-6.4,h:0.25,fontFace:RP_F,fontSize:8.5,italic:true,color:RP.muted,align:'center',margin:0,isTextBox:true});
@@ -2936,20 +2989,45 @@ async function rpFixCharts(zip, meta){
     const lastOf=ser=>{ let l=-1; (ser.match(/<c:val>[\s\S]*<\/c:val>/)||[''])[0].replace(/<c:pt idx="(\d+)">/g,(a,i)=>{ l=Math.max(l,+i); return a; }); return l; };
     const sers=x.match(/<c:ser>[\s\S]*?<\/c:ser>/g)||[];
     const earnedLast=(()=>{ const e=sers.find(z=>/<c:v>Earned/.test(z)); return e?lastOf(e):-1; })();
+    // point values per series (idx -> 0..1)
+    const valsOf=ser=>{ const o={}; const v=(ser.match(/<c:val>[\s\S]*<\/c:val>/)||[''])[0];
+      v.replace(/<c:pt idx="(\d+)">\s*<c:v>([^<]*)<\/c:v>/g,(a,i,n)=>{ if(n!=='') o[+i]=+n; return a; }); return o; };
+    const serP=sers.find(z=>/<c:tx>[\s\S]*?<c:v>Planned/.test(z)), serE=sers.find(z=>/<c:tx>[\s\S]*?<c:v>Earned/.test(z));
+    const PV=serP?valsOf(serP):{}, EV=serE?valsOf(serE):{};
+    const low=m.fs>=8?0.08:0.15;           // below this a "below the line" label would hit the x-axis
+    const near=m.fs>=8?0.07:0.12;          // two labels closer than this (vertically) at the same point would touch
+    const kept=(vals,last)=>{              // spaced labels + always the latest one, never one squeezed next to the latest
+      const out=new Set(); for(let i=0;i<=last;i++){ if(vals[i]==null) continue;
+        if(i===last) out.add(i); else if(i%step===0 && last-i>=step) out.add(i); } return out; };
+    const lastP=serP?lastOf(serP):-1, lastE=serE?lastOf(serE):-1;
+    const keepP=kept(PV,lastP), keepE=kept(EV,lastE);
+    // Earned: drop 0% start points (they sit on the axis) unless it is the latest point
+    [...keepE].forEach(i=>{ if(i!==lastE && (EV[i]||0)<0.005) keepE.delete(i); });
+    // where both labels are at the same point and too close, keep only one (Earned wins at its latest point)
+    [...keepE].forEach(i=>{ if(keepP.has(i) && Math.abs((PV[i]||0)-(EV[i]||0))<near){ if(i===lastE) keepP.delete(i); else keepE.delete(i); } });
+    const posOf=(isP,i)=>{
+      const p=PV[i], e=EV[i];
+      if(isP){ if(e!=null && keepE.has(i) && e>p) return 'b'; return 't'; }
+      if(p!=null && e>=p) return 't';                    // Earned ahead of plan -> above
+      if(e<low) return 'r';                              // too close to the axis -> to the right
+      return 'b';
+    };
+    const lbl=(col)=>'<c:numFmt formatCode="0%" sourceLinked="0"/>'
+      +'<c:spPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="9525"><a:solidFill><a:srgbClr val="'+col+'"/></a:solidFill></a:ln></c:spPr>'
+      +'<c:txPr><a:bodyPr wrap="none" lIns="19050" tIns="0" rIns="19050" bIns="0"/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="'+(m.fs*100)+'" b="1"><a:solidFill><a:srgbClr val="'+col+'"/></a:solidFill><a:latin typeface="Calibri"/></a:defRPr></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>';
+    const flags='<c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/>';
     sers.forEach(ser=>{
       const nm=((ser.match(/<c:tx>[\s\S]*?<c:v>([^<]*)<\/c:v>/)||[])[1]||'');
       let dl;
       if(/^Actual/.test(nm)) dl='<c:dLbls><c:delete val="1"/></c:dLbls>';
       else{
-        const planned=/^Planned/.test(nm), col=planned?RP.teal:RP.earn, last=lastOf(ser), del=[];
+        const planned=/^Planned/.test(nm), col=planned?RP.teal:RP.earn, keep=planned?keepP:keepE, one=[];
         for(let i=0;i<m.n;i++){
-          const keep=i%step===0 || i===last;
-          if(!keep || i>last) del.push('<c:dLbl><c:idx val="'+i+'"/><c:delete val="1"/></c:dLbl>');
+          if(!keep.has(i)){ one.push('<c:dLbl><c:idx val="'+i+'"/><c:delete val="1"/></c:dLbl>'); continue; }
+          one.push('<c:dLbl><c:idx val="'+i+'"/>'+lbl(col)+'<c:dLblPos val="'+posOf(planned,i)+'"/>'+flags+'</c:dLbl>');
         }
-        dl='<c:dLbls>'+del.join('')+'<c:numFmt formatCode="0%" sourceLinked="0"/>'
-          +'<c:spPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln w="9525"><a:solidFill><a:srgbClr val="'+col+'"/></a:solidFill></a:ln></c:spPr>'
-          +'<c:txPr><a:bodyPr wrap="none" lIns="19050" tIns="0" rIns="19050" bIns="0"/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="'+(m.fs*100)+'" b="1"><a:solidFill><a:srgbClr val="'+col+'"/></a:solidFill><a:latin typeface="Calibri"/></a:defRPr></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>'
-          +'<c:dLblPos val="'+(planned?'b':'t')+'"/><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/><c:showLeaderLines val="0"/>'
+        dl='<c:dLbls>'+one.join('')+lbl(col)
+          +'<c:dLblPos val="'+(planned?'t':'b')+'"/>'+flags+'<c:showLeaderLines val="0"/>'
           +'<c:extLst><c:ext uri="{CE6537A1-D6FC-4f65-9D91-7224C49458BB}" xmlns:c15="http://schemas.microsoft.com/office/drawing/2012/chart"><c15:spPr xmlns:c15="http://schemas.microsoft.com/office/drawing/2012/chart"><a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></c15:spPr></c:ext></c:extLst>'
           +'</c:dLbls>';
       }
@@ -2972,7 +3050,10 @@ async function rpDownload(pid, btn){
   try{
     await rpLoadLib();
     const remEl=document.getElementById('rp-rem-'+pid), remark=remEl?remEl.value:'';
-    const pres=rpBuild(it,{remark:remark});
+    const scReq={}; rpBuild(it,{remark:remark,scReq:scReq});          // pass 1: find each S-curve's size on the slides
+    const scImg={};
+    for(const k of Object.keys(scReq)){ const r=scReq[k]; const png=await rpScPng(k,r.S,r.w,r.h,r.compact); if(png) scImg[k]=png; }
+    const pres=rpBuild(it,{remark:remark,scImg:scImg});
     const n=new Date(), stamp=String(n.getDate()).padStart(2,'0')+'-'+MON[n.getMonth()]+'-'+n.getFullYear();
     const fileName=(it.name+' Report '+stamp).replace(/[^\w-]+/g,'_')+'.pptx';
     const zip=await rpPackage(pres);
