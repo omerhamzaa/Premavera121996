@@ -1094,6 +1094,23 @@ const pct = n => (n*100).toFixed(2)+'%';
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtDate(iso){if(iso==null||iso==='')return '\u2014';const d=new Date(String(iso).slice(0,10)+'T00:00:00');if(isNaN(d))return String(iso);return String(d.getDate()).padStart(2,'0')+'-'+MON[d.getMonth()]+'-'+d.getFullYear();}
 window.fmtDate=fmtDate; // shared with the admin date-edit block (separate script)
+/* HARD-FIXED finish figures per project (whole project, no filter). Remove a line to go back to the sheet values. */
+const DATE_FIX = {
+  elev: {expectedEnd: '2026-09-09', delay: 14}     // Elevation: expected end 09-Sep-2026, delay 14 days
+};
+function dateFix(pid, dt){
+  const f = DATE_FIX[pid]; if(!f) return dt;
+  const o = Object.assign({}, dt || {});
+  if(f.expectedEnd) o.expectedEnd = f.expectedEnd;
+  if(f.delay !== undefined && f.delay !== null) o.fixedDelay = f.delay;
+  return o;
+}
+function dtDelay(dt){
+  if(!dt) return null;
+  if(dt.fixedDelay !== undefined && dt.fixedDelay !== null) return dt.fixedDelay;
+  return (dt.plannedEnd && dt.expectedEnd) ? Math.round((new Date(dt.expectedEnd+'T00:00:00')-new Date(dt.plannedEnd+'T00:00:00'))/86400000) : null;
+}
+window.dateFix=dateFix; window.dtDelay=dtDelay;
 function blank(){return {bcost:0,pcost:0,ecost:0,acost:0,bqty:0,pqty:0,eqty:0,aqty:0};}
 function add(t,r){t.bcost+=r[C.bcost];t.pcost+=r[C.pcost];t.ecost+=r[C.ecost];t.acost+=r[C.acost];
   t.bqty+=r[C.bqty];t.pqty+=r[C.pqty];t.eqty+=r[C.eqty];t.aqty+=r[C.aqty];return t;}
@@ -1502,12 +1519,12 @@ function render(){
 
   // dates (follow the filters when Activity Data is loaded)
   const VD=viewDates(all);
-  window.__autoDates = (VD.dates && VD.dates.plannedEnd && VD.dates.expectedEnd) ? {p:VD.dates.plannedEnd, e:VD.dates.expectedEnd} : null;
-  if(VD.dates && VD.dates.plannedEnd && VD.dates.expectedEnd){
-    const p=new Date(VD.dates.plannedEnd+'T00:00:00'), e=new Date(VD.dates.expectedEnd+'T00:00:00');
+  const vdDelay = dtDelay(VD.dates);
+  window.__autoDates = (VD.dates && VD.dates.expectedEnd && vdDelay!==null) ? {p:VD.dates.plannedEnd||null, e:VD.dates.expectedEnd, d:(VD.dates.fixedDelay!=null?VD.dates.fixedDelay:null)} : null;
+  if(VD.dates && VD.dates.expectedEnd && vdDelay!==null){
     document.getElementById('k-pend').textContent=fmtDate(VD.dates.plannedEnd);
     document.getElementById('k-eend').textContent=fmtDate(VD.dates.expectedEnd);
-    document.getElementById('k-delay').textContent=Math.round((e-p)/86400000);
+    document.getElementById('k-delay').textContent=vdDelay;
     document.getElementById('k-dsrc').textContent = VD.note ? VD.note : D.dates.src==='act' ? 'Activity Data: MAX(Planned Finish) vs MAX(Finish)' : D.dates.src==='est' ? 'Estimated from S-curve (SPI-t)' : D.dates.src==='mix' ? 'Expected: P6 Finish \u00b7 Planned: S-curve 100% month' : '';
   } else {
     ['k-pend','k-eend','k-delay'].forEach(id=>{ document.getElementById(id).textContent='\u2014'; });
@@ -1736,8 +1753,8 @@ function renderExec(list){
         +'<div class="ex-sub"><i class="ex-dot" style="background:'+cs[0]+'"></i>'+cs[1]+'</div>'
         : '<div class="ex-num muted">\u2014</div><div class="ex-sub">No actual cost yet</div>';
       const dt=it.data.dates;
-      if(dt && dt.plannedEnd && dt.expectedEnd){
-        const d=Math.round((new Date(dt.expectedEnd+'T00:00:00')-new Date(dt.plannedEnd+'T00:00:00'))/86400000);
+      if(dt && dt.expectedEnd && dtDelay(dt)!==null){
+        const d=dtDelay(dt);
         delay='<div class="ex-num '+(d>0?'bad':'good')+'">'+d+'<small>days</small></div><div class="ex-sub">Expected finish '+fmtDate(dt.expectedEnd)+'</div>';
       } else delay='<div class="ex-num muted">'+dash+'</div><div class="ex-sub">Finish dates not set</div>';
     } else {
@@ -1853,8 +1870,8 @@ function kpiDetail(kind, pid){
     figs=[['Planned value (should be done)',mRs(t.pcost)],['Earned value (actually done)',mRs(t.ecost)],
           [sv>=0?'Ahead of plan by':'Behind plan by','<em style="color:'+(sv>=0?'#2E8B57':'#C0392B')+'">'+mRs(Math.abs(sv))+'</em>']];
     const dt=m.dates;
-    if(dt && dt.plannedEnd && dt.expectedEnd){
-      const d=Math.round((new Date(dt.expectedEnd+'T00:00:00')-new Date(dt.plannedEnd+'T00:00:00'))/86400000);
+    if(dt && dt.expectedEnd && dtDelay(dt)!==null){
+      const d=dtDelay(dt);
       figs.push(['Expected finish', fmtDate(dt.expectedEnd)+' <small style="color:'+(d>0?'#C0392B':'#2E8B57')+'">('+(d>0?d+' days late':'on time')+')</small>']);
     } else figs.push(['Expected finish','\u2014']);
     scale=[[1,Infinity,'1.00 or more','On schedule','#2E8B57'],[0.95,1,'0.95 \u2013 0.99','Slightly behind','#B8861B'],
@@ -2384,7 +2401,7 @@ async function buildReportPdf(pid, meta){
   meta.section='Dashboard report'; head('Dashboard report');
   const t=d.rows.reduce((a,r)=>add(a,r),blank());
   const pp=t.bcost?t.pcost/t.bcost*100:0, ep=t.bcost?t.ecost/t.bcost*100:0, spi=t.pcost?t.ecost/t.pcost:0, cpi=t.acost?t.ecost/t.acost:0;
-  const dt=d.dates||{}, dly=(dt.plannedEnd&&dt.expectedEnd)?daDays(dt.plannedEnd,dt.expectedEnd):null;
+  const dt=d.dates||{}, dly=dtDelay(dt);
   const kp=[['Planned progress',pp.toFixed(2)+'%'],['Earned progress',ep.toFixed(2)+'%'],['SPI',spi.toFixed(2)],['CPI',t.acost?cpi.toFixed(2):'\u2014'],
     ['Planned end',dt.plannedEnd?daFmt(dt.plannedEnd):'\u2014'],['Expected end',dt.expectedEnd?daFmt(dt.expectedEnd):'\u2014'],['Delay (days)',dly==null?'\u2014':String(dly)]];
   const bw=(W-60-6*8)/7;
@@ -2705,7 +2722,7 @@ function rpBuild(it, opt){
   const rep=d.rows.filter(r=>rpKeep(d,r)).reduce((t,r)=>add(t,r),blank());
   const plannedPct=raw.bcost?raw.pcost/raw.bcost*100:0, earnedPct=raw.bcost?raw.ecost/raw.bcost*100:0;
   const spi=raw.pcost?raw.ecost/raw.pcost:0, cpi=raw.acost?raw.ecost/raw.acost:0;
-  const dt=d.dates||{}, delay=(dt.plannedEnd&&dt.expectedEnd)?daDays(dt.plannedEnd,dt.expectedEnd):null;
+  const dt=d.dates||{}, delay=dtDelay(dt);
 
   /* ================= slide 1: overview ================= */
   let s=slide('Overview');
@@ -2813,7 +2830,7 @@ function rpBuild(it, opt){
     });
     // KPI 2x2
     const ky2=by+1.1, kh2=(bh2-1.2)/2-0.05, kw2=1.25;
-    const dtp=pd.dates||{}, dd=(dtp.plannedEnd&&dtp.expectedEnd)?daDays(dtp.plannedEnd,dtp.expectedEnd):null;
+    const dtp=pd.dates||{}, dd=dtDelay(dtp);
     const cpB=cp>1.10?'Check costs':cp>=1?'Good spending':cp>=0.95?'Slightly over':cp>=0.9?'Over budget':'Overspending';
     [['Progress %',ac.toFixed(2)+'%','Planned '+pl.toFixed(2)+'%',RP.deep],
      ['SPI',sp.toFixed(2),sp>=1?'On schedule':((1-sp)*100).toFixed(0)+'% behind',sp>=1?RP.good:sp>=0.9?RP.warn:RP.bad],
@@ -3119,7 +3136,7 @@ function renderReport(){
     if(has){
       const t=d.rows.reduce((a,r)=>add(a,r),blank());
       const ep=t.bcost?t.ecost/t.bcost*100:0, pp=t.bcost?t.pcost/t.bcost*100:0, sp=t.pcost?t.ecost/t.pcost:0;
-      const dt=d.dates||{}, dl=(dt.plannedEnd&&dt.expectedEnd)?daDays(dt.plannedEnd,dt.expectedEnd):null;
+      const dt=d.dates||{}, dl=dtDelay(dt);
       stats='<div class="rp-stats">'
         +'<div><span>Progress</span><b>'+ep.toFixed(2)+'%</b><small>planned '+pp.toFixed(2)+'%</small></div>'
         +'<div><span>SPI</span><b class="'+(sp>=1?'good':sp>=0.9?'warn':'bad')+'">'+sp.toFixed(2)+'</b><small>'+(sp>=1?'on schedule':((1-sp)*100).toFixed(0)+'% behind')+'</small></div>'
@@ -4009,7 +4026,7 @@ async function load(pid, opts){
           dt = {plannedEnd: est.plannedEnd, expectedEnd: pd.expectedEnd, src: 'mix'};
         else dt = est;
       }
-      P.data.dates = dt;
+      P.data.dates = dateFix(pid, dt);
       if(pr.missing.length) notes.push('columns not matched: ' + pr.missing.join(', '));
     } else if(P.builtin){
       P.data = Object.assign({}, BASE, {scurve: sc ? fillPlanned(sc, BASE.scurve) : BASE.scurve});
@@ -4424,6 +4441,7 @@ else { USER = ''; TABS = []; $('loginGate').hidden = false; fillUsernames(); }
     const p=o.pend||(A&&A.p)||null, e=o.eend||(A&&A.e)||null;
     let d=null;
     if(o.delay!==undefined && o.delay!==null && o.delay!=='') d=Number(o.delay);
+    else if(!o.pend && !o.eend && A && A.d!=null) d=A.d;      // hard-fixed delay (DATE_FIX)
     else if(p && e) d=days(p,e);
     return {o:o, p:p, e:e, d:d};
   }
