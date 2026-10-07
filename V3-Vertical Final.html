@@ -276,6 +276,14 @@ body{background:#F3F1EA}
 #scf-pop label b{margin-left:auto;font-variant-numeric:tabular-nums}
 #scf-pop .scf-none,#scf-pop .scf-foot{color:#6E7A78;font-size:11px;padding:6px 2px 0}
 @media print{.scf,.scf-wrap,#scf-pop{display:none!important}}
+/* Admin-editable date cards (Planned end / Expected end / Delay) */
+body.dt-can-edit .dt-editable{cursor:pointer;transition:box-shadow .15s}
+body.dt-can-edit .dt-editable:hover{box-shadow:0 0 0 2px var(--gold) inset}
+.dt-tag{display:none;font-size:10px;font-weight:600;color:#A0522D;margin-top:4px;letter-spacing:.02em}
+.dt-edited .dt-tag{display:none}
+#scf-pw .dt-row{display:flex;gap:8px;justify-content:space-between;margin-top:6px}
+#scf-pw .dt-row .reset{font:inherit;font-size:12px;padding:6px 10px;border-radius:7px;border:1px solid #E3C9BC;background:#fff;color:#A0522D;cursor:pointer}
+@media print{.dt-tag{display:none!important}}
 /* Executive View month filter: password lock */
 .scf-lock{flex:none;color:#A0522D;margin-left:1px}
 #scf-pw{position:fixed;inset:0;z-index:9999;background:rgba(20,24,24,.38);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -1084,7 +1092,8 @@ const nf0 = n => Math.round(n).toLocaleString('en-US');
 const nf2 = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct = n => (n*100).toFixed(2)+'%';
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function fmtDate(iso){const d=new Date(iso+'T00:00:00');return String(d.getDate()).padStart(2,'0')+'-'+MON[d.getMonth()]+'-'+d.getFullYear();}
+function fmtDate(iso){if(iso==null||iso==='')return '\u2014';const d=new Date(String(iso).slice(0,10)+'T00:00:00');if(isNaN(d))return String(iso);return String(d.getDate()).padStart(2,'0')+'-'+MON[d.getMonth()]+'-'+d.getFullYear();}
+window.fmtDate=fmtDate; // shared with the admin date-edit block (separate script)
 function blank(){return {bcost:0,pcost:0,ecost:0,acost:0,bqty:0,pqty:0,eqty:0,aqty:0};}
 function add(t,r){t.bcost+=r[C.bcost];t.pcost+=r[C.pcost];t.ecost+=r[C.ecost];t.acost+=r[C.acost];
   t.bqty+=r[C.bqty];t.pqty+=r[C.pqty];t.eqty+=r[C.eqty];t.aqty+=r[C.aqty];return t;}
@@ -1493,6 +1502,7 @@ function render(){
 
   // dates (follow the filters when Activity Data is loaded)
   const VD=viewDates(all);
+  window.__autoDates = (VD.dates && VD.dates.plannedEnd && VD.dates.expectedEnd) ? {p:VD.dates.plannedEnd, e:VD.dates.expectedEnd} : null;
   if(VD.dates && VD.dates.plannedEnd && VD.dates.expectedEnd){
     const p=new Date(VD.dates.plannedEnd+'T00:00:00'), e=new Date(VD.dates.expectedEnd+'T00:00:00');
     document.getElementById('k-pend').textContent=fmtDate(VD.dates.plannedEnd);
@@ -1503,6 +1513,7 @@ function render(){
     ['k-pend','k-eend','k-delay'].forEach(id=>{ document.getElementById(id).textContent='\u2014'; });
     document.getElementById('k-dsrc').textContent=VD.note||'';
   }
+  if(window.__applyDateEdits) window.__applyDateEdits();   // admin-edited values for the 3 date cards
 
   // progress bars: Grey / MEP / Finishing
   const MEPS=['Electrical','Firefighting','HVAC','Plumbing'];
@@ -4384,6 +4395,95 @@ else { USER = ''; TABS = []; $('loginGate').hidden = false; fillUsernames(); }
   let t=null;
   new MutationObserver(()=>{ clearTimeout(t); t=setTimeout(addButtons,30); }).observe(document.body,{childList:true,subtree:true});
   addButtons();
+})();
+
+/* ============================================================
+   ADMIN-EDITABLE DATE CARDS
+   Planned end date / Expected end date / Project delay (days)
+   - Only a user with "Database Sync" permission (admin) can edit.
+   - Click a card -> edit -> Save. "Reset to auto" goes back to the sheet value.
+   - If only a date is edited, delay is recalculated from the two dates.
+   - Saved per project in this browser (localStorage).
+   ============================================================ */
+(function(){
+  const KEY='pcd_date_edits_v1';
+  const load=()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } };
+  const store=o=>{ try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} };
+  const isAdmin=()=>!!(window.__tabAllowed && window.__tabAllowed('sync'));
+  const pid=()=>{ try{ return curProject; }catch(e){ return 'v3'; } };
+  const days=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+  const FIELDS={
+    pend:{id:'k-pend', title:'Planned end date', type:'date'},
+    eend:{id:'k-eend', title:'Expected end date', type:'date'},
+    delay:{id:'k-delay', title:'Project delay (days)', type:'number'}
+  };
+  let wired=false;
+
+  function current(){
+    const A=window.__autoDates||null, o=load()[pid()]||{};
+    const p=o.pend||(A&&A.p)||null, e=o.eend||(A&&A.e)||null;
+    let d=null;
+    if(o.delay!==undefined && o.delay!==null && o.delay!=='') d=Number(o.delay);
+    else if(p && e) d=days(p,e);
+    return {o:o, p:p, e:e, d:d};
+  }
+
+  function wire(){
+    if(wired) return;
+    Object.keys(FIELDS).forEach(k=>{
+      const el=document.getElementById(FIELDS[k].id); if(!el) return;
+      const card=el.closest('.card')||el.parentElement;
+      card.classList.add('dt-editable');
+      if(!card.querySelector('.dt-tag')){ const t=document.createElement('div'); t.className='dt-tag'; t.textContent=''; card.appendChild(t); }
+      card.addEventListener('click',()=>{ if(isAdmin()) openEditor(k); });
+    });
+    wired=true;
+  }
+
+  window.__applyDateEdits=function(){
+    wire();
+    document.body.classList.toggle('dt-can-edit', isAdmin());
+    const c=current(), o=c.o;
+    const any=!!(o.pend||o.eend||(o.delay!==undefined&&o.delay!==null&&o.delay!==''));
+    const set=(k,txt,edited)=>{ const el=document.getElementById(FIELDS[k].id); if(!el) return;
+      if(any) el.textContent=txt;
+      const card=el.closest('.card'); if(card){ card.classList.toggle('dt-edited', !!edited);
+        card.title = isAdmin() ? 'Click to edit' : ''; } };
+    set('pend',  c.p?fmtDate(c.p):'\u2014', !!o.pend);
+    set('eend',  c.e?fmtDate(c.e):'\u2014', !!o.eend);
+    set('delay', c.d==null?'\u2014':String(c.d), o.delay!==undefined&&o.delay!==null&&o.delay!=='');
+  };
+
+  function openEditor(k){
+    const F=FIELDS[k], c=current();
+    const val = k==='pend'?(c.p||'') : k==='eend'?(c.e||'') : (c.d==null?'':String(c.d));
+    const old=document.getElementById('scf-pw'); if(old) old.remove();
+    const w=document.createElement('div'); w.id='scf-pw';
+    w.innerHTML='<div class="pw-box">'
+      +'<div class="pw-h">Edit '+F.title+'</div>'
+      +'<div class="pw-sub">Project: '+String(pid()).toUpperCase()+(k==='delay'?' \u2014 leave empty to calculate from the two dates':'')+'</div>'
+      +'<input type="'+F.type+'"'+(F.type==='number'?' step="1"':'')+' value="'+val+'">'
+      +'<div class="pw-err"></div>'
+      +'<div class="dt-row"><button type="button" class="reset">Reset to auto</button>'
+      +'<span class="pw-row" style="margin:0"><button type="button" class="cancel">Cancel</button><button type="button" class="ok">Save</button></span></div></div>';
+    const inp=w.querySelector('input'), err=w.querySelector('.pw-err');
+    const close=()=>w.remove();
+    const commit=(v)=>{ const all=load(); const o=all[pid()]||{};
+      if(v===null||v==='') delete o[k]; else o[k]=v;
+      if(Object.keys(o).length) all[pid()]=o; else delete all[pid()];
+      store(all); close(); window.__applyDateEdits(); };
+    const save=()=>{ const v=inp.value.trim();
+      if(F.type==='date' && v && !/^\d{4}-\d{2}-\d{2}$/.test(v)){ err.textContent='Please pick a valid date.'; return; }
+      if(F.type==='number' && v!=='' && !/^-?\d+$/.test(v)){ err.textContent='Enter whole days (e.g. 37).'; return; }
+      if(F.type==='date' && !v){ err.textContent='Pick a date, or press Reset to auto.'; return; }
+      commit(v); };
+    w.addEventListener('click',e=>{ e.stopPropagation();
+      if(e.target===w || e.target.closest('.cancel')) close();
+      else if(e.target.closest('.reset')) commit(null);
+      else if(e.target.closest('.ok')) save(); });
+    inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') save(); else if(e.key==='Escape') close(); });
+    document.body.appendChild(w); inp.focus();
+  }
 })();
 </script>
 </body>
