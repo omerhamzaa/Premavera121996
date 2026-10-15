@@ -2165,7 +2165,7 @@ function daTable(g,list,hasReason){
   const cols=DA_COLS.filter(c=>c.k!=='reason'||hasReason);
   const ar=k=> st.k===k ? '<span class="ar">'+(st.dir<0?'\u25BC':'\u25B2')+'</span>' : '';
   const head='<tr>'+cols.map(c=>'<th'+(c.k==='sr'?'':' data-dasort="'+c.k+'"')+(c.k==='name'?' style="text-align:left!important"':'')+'>'+c.t+ar(c.k)+'</th>').join('')+'</tr>';
-  const pc=v=> v==null?'\u2014':Math.round(v)+' %';
+  const pc=daPct;
   const body = list.length ? list.map((a,i)=>{
     const lv=a.delay>=30?'':a.delay>=15?' d2':' d1';
     const cells={sr:'<td class="c">'+(i+1)+'</td>', id:'<td style="text-align:left">'+esc(a.id)+'</td>',
@@ -2178,10 +2178,19 @@ function daTable(g,list,hasReason){
   }).join('') : '<tr class="da-empty"><td colspan="'+cols.length+'">No delayed activities here \u2714</td></tr>';
   return '<div class="card dt-card"><div class="dt-scroll"><table class="dt-tbl da-tbl" data-grp="'+g+'"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div></div>';
 }
+/* FORMAT(x, "0 %") with zero shown blank, like the Power BI "without zero" measures */
+const daPct=v=> v==null ? '—' : Math.round(v)===0 ? '' : Math.round(v)+' %';
 function daCompute(d,asOf,o){
   o=o||{}; const onlyCrit=!!o.onlyCrit, withDone=!!o.withDone, q=o.q||'';
   const groups={Grey:[],MEP:[],Finishing:[],Other:[]};
   let total=0, crit=0;
+  /* Planned Progress / Actual Progress columns, same as the Power BI report:
+       Planned Progress % = Planned Value / Budgeted Cost
+       Progress %         = Earned Value  / Budgeted Cost
+     Both are project-level measures (same value on every row, 0 shown blank).
+     If the Activity Data export carries its own % columns they are used instead. */
+  const T=(d.rows||[]).reduce((t,r)=>add(t,r),blank());
+  const projPP = T.bcost ? T.pcost/T.bcost*100 : null, projAP = T.bcost ? T.ecost/T.bcost*100 : null;
   d.acts.forEach(a=>{
     /* Delayed = as of the data date the activity should already have started / finished (planned dates)
        but has not. Future activities that are only forecast to slip are NOT delayed yet. */
@@ -2199,6 +2208,8 @@ function daCompute(d,asOf,o){
     if(onlyCrit && !a.crit) return;
     if(q && (a.id+' '+a.name).toLowerCase().indexOf(q)<0) return;
     const x=Object.assign({},a,{delay:delay,_st:st});
+    if(x.pp==null) x.pp=projPP;
+    if(x.ap==null) x.ap=projAP;
     groups[daGroupOf(a)].push(x); total++; if(a.crit) crit++;
   });
   return {groups:groups,total:total,crit:crit};
@@ -2237,7 +2248,7 @@ function renderDelay(){
       +'<button class="btn ghost" type="button" data-dapdf="'+g+'">\u2B07 PDF</button></span>'
       +daTable(g,groups[g],hasReason)+'</div>';
   });
-  html+='<p class="dt-note">Listed: activities whose planned start or planned finish is before the \u201cAs of\u201d date but which have not started / finished yet. Delay Days = Finish \u2212 Planned Finish (start delay for activities that have not started). Activities planned after the \u201cAs of\u201d date are not counted, even if P6 forecasts them late. Click a column heading to sort.</p>';
+  html+='<p class="dt-note">Listed: activities whose planned start or planned finish is before the \u201cAs of\u201d date but which have not started / finished yet. Delay Days = Finish \u2212 Planned Finish (start delay for activities that have not started). Activities planned after the \u201cAs of\u201d date are not counted, even if P6 forecasts them late. Planned Progress = Planned Cost \u00f7 Budgeted Cost and Actual Progress = Earned Value \u00f7 Budgeted Cost for the whole project (same on every row, as in the Power BI report). Click a column heading to sort.</p>';
   host.innerHTML=html;
   daLast={asOf:asOf, total:total, crit:crit, q:q, onlyCrit:onlyCrit, withDone:withDone};
   host.querySelectorAll('th[data-dasort]').forEach(th=>th.addEventListener('click',()=>{
@@ -2432,9 +2443,9 @@ async function buildReportPdf(pid, meta){
       y=first?84:nextY(); first=false; sub(g+'  ('+L.length+' delayed)',y);
       T({startY:y+6, styles:{fontSize:7.5,cellPadding:3,halign:'center',lineColor:[225,220,208],lineWidth:0.4},
          columnStyles:{1:{halign:'left'},3:{halign:'left',cellWidth:180}},
-         head:[['#','Activity ID','Criticality','Activity Name','Planned Start','Planned Finish','Start','Finish','Delay Days','Status','Actual %']],
-         body:L.length?L.map((a,i)=>[i+1,a.id,a.crit?'Critical':'-',a.name,daFmt(a.ps),daFmt(a.pf),daFmt(a.s),daFmt(a.f),a.delay,a._st[1],a.ap==null?'\u2014':Math.round(a.ap)+'%'])
-                      :[[{content:'No delayed activities',colSpan:11,styles:{halign:'center',textColor:[120,120,120]}}]],
+         head:[['#','Activity ID','Criticality','Activity Name','Planned Start','Planned Finish','Start','Finish','Delay Days','Status','Planned %','Actual %']],
+         body:L.length?L.map((a,i)=>[i+1,a.id,a.crit?'Critical':'-',a.name,daFmt(a.ps),daFmt(a.pf),daFmt(a.s),daFmt(a.f),a.delay,a._st[1],daPct(a.pp),daPct(a.ap)])
+                      :[[{content:'No delayed activities',colSpan:12,styles:{halign:'center',textColor:[120,120,120]}}]],
          didParseCell:c=>{ if(c.section!=='body') return;
            if(c.column.index===8 && typeof c.cell.raw==='number'){ const v=c.cell.raw; c.cell.styles.fillColor=v>=30?[242,85,85]:v>=15?[245,138,91]:[247,178,103]; c.cell.styles.textColor=v>=15?[255,255,255]:[58,42,16]; c.cell.styles.fontStyle='bold'; }
            if(c.column.index===2 && c.cell.raw==='Critical'){ c.cell.styles.textColor=[208,65,58]; c.cell.styles.fontStyle='bold'; } }});
@@ -2925,15 +2936,15 @@ function rpBuild(it, opt){
     s.addText('Delayed activities as of '+daFmt(asOf)+(list.length>MAXA?'  \u2014  top '+MAXA+' of '+list.length+' (critical first, then longest delay)':''),
       {x:M,y:1.98,w:CW,h:0.32,fontFace:RP_F,fontSize:13,bold:true,color:RP.deep,margin:0,isTextBox:true,valign:'middle'});
     const aRows=[[hc('#'),hc('Group'),hc('Activity ID'),hc('Criticality'),hc('Activity Name',{align:'left'}),hc('Planned Start'),hc('Planned Finish'),
-                  hc('Start'),hc('Finish'),hc('Delay Days'),hc('Status'),hc('Actual %')]];
+                  hc('Start'),hc('Finish'),hc('Delay Days'),hc('Status'),hc('Planned %'),hc('Actual %')]];
     shown.forEach((a,i)=>{ const o={align:'center',fill:{color:i%2?RP.alt:RP.card}};
       const dc=a.delay>=30?'F25555':a.delay>=15?'F58A5B':'F7B267';
       aRows.push([tc(i+1,o),tc(a.grp,o),tc(a.id,Object.assign({},o,{align:'left'})),tc(a.crit?'Critical':'-',Object.assign({},o,a.crit?{color:'D0413A',bold:true}:{})),
         tc(a.name,Object.assign({},o,{align:'left'})),tc(daFmt(a.ps),o),tc(daFmt(a.pf),o),tc(daFmt(a.s)+(a.sA?' A':''),o),tc(daFmt(a.f)+(a.fA?' A':''),o),
-        tc(a.delay,Object.assign({},o,{bold:true,fill:{color:dc},color:a.delay>=15?'FFFFFF':'3A2A10'})),tc(a._st[1],o),tc(a.ap==null?'\u2014':Math.round(a.ap)+'%',o)]); });
-    if(!shown.length) aRows.push([{text:'No delayed activities \u2714',options:{colspan:12,align:'center',color:RP.muted}}]);
+        tc(a.delay,Object.assign({},o,{bold:true,fill:{color:dc},color:a.delay>=15?'FFFFFF':'3A2A10'})),tc(a._st[1],o),tc(daPct(a.pp),o),tc(daPct(a.ap),o)]); });
+    if(!shown.length) aRows.push([{text:'No delayed activities \u2714',options:{colspan:13,align:'center',color:RP.muted}}]);
     const arh=Math.min(0.32,(6.95-2.4)/aRows.length);
-    s.addTable(aRows,TB({x:M,y:2.4,w:CW,colW:[0.4,0.8,1.25,0.8,3.18,1.0,1.0,0.95,0.95,0.6,0.95,0.65],rowH:arh,fontSize:9.5}));
+    s.addTable(aRows,TB({x:M,y:2.4,w:CW,colW:[0.4,0.8,1.2,0.8,2.78,1.0,1.0,0.95,0.95,0.6,0.95,0.55,0.55],rowH:arh,fontSize:9.5}));
   } else {
     card(s,M+2.5,2.4,CW-5,2.2);
     s.addText([{text:'Activity list not loaded for this project',options:{bold:true,fontSize:16,color:RP.deep,breakLine:true}},
@@ -3473,7 +3484,9 @@ const ACT_CODE = {id:'task_code', name:'task_name', wbs:'wbs_name',
   ps:['target_start_date','primary_base_start_date','base_start_date','bl1_start_date'],
   pf:['target_end_date','primary_base_end_date','base_end_date','bl1_end_date'],
   s:'start_date', f:'end_date', as:'act_start_date', af:'act_end_date', crit:['driving_path_flag','critical_flag'], tf:'total_float_hr_cnt',
-  status:'status_code', ap:'complete_pct'};
+  status:'status_code',
+  pp:['sched_complete_pct','schedule_pct_complete'],                                   // (*)Schedule % Complete(%)
+  ap:['perfm_complete_pct','phys_complete_pct','act_pct_complete','complete_pct']};    // (*)Performance % Complete(%)
 const ACT_WANT = {
   id:     x => /^(activity id|activity_id|act id|id|task code)$/.test(x) || /activity id/.test(x),
   name:   x => /activity name|task name|^name$|^description$/.test(x),
@@ -3488,8 +3501,8 @@ const ACT_WANT = {
   crit:   x => /critical|criticality|driving path/.test(x),
   tf:     x => /total float/.test(x),
   status: x => /status/.test(x) && !/critical/.test(x),
-  pp:     x => /(planned|schedule|scheduled|baseline).*(%|complete|progress)/.test(x),
-  ap:     x => /(activity|physical|actual|performance|duration).*(%|complete|progress)/.test(x) || /^(% complete|progress)$/.test(x),
+  pp:     x => /(planned|sched|schedule|scheduled|baseline).*(%|complete|progress|pct)/.test(x),
+  ap:     x => /(activity|physical|phys|actual|performance|perfm|perf|duration).*(%|complete|progress|pct)/.test(x) || /^(% complete|progress)$/.test(x),
   reason: x => /reason|remark|comment|note|cause/.test(x),
   dd:     x => /data date|last_recalc_date|status date/.test(x)
 };
@@ -3514,7 +3527,45 @@ function parseActivities(rows){
     if(t.id !== undefined && (t.pf !== undefined || t.f !== undefined)){ hi = i; m = t; break; }
   }
   if(hi < 0) return null;
+  /* P6 exports carry two heading rows (field codes, then readable names). If the row after the
+     one we matched is also a heading (no date in the finish column), read it too so a column
+     named only there - e.g. "Schedule % Complete" typed in the names row - is still picked up. */
+  const nx = rows[hi + 1] || [];
+  const hasNames = !!(nx.length && m.pf !== undefined && !cellISO(nx[m.pf]) && txt(nx[m.id]));
+  if(hasNames){
+    const t2 = mapActHeader(nx), taken = {};
+    for(const k in m) taken[m[k]] = 1;
+    for(const k in t2) if(m[k] === undefined && !taken[t2[k]]){ m[k] = t2[k]; taken[t2[k]] = 1; }
+  }
   const g = (r, k) => (m[k] === undefined ? null : r[m[k]]);
+  /* P6 exports (V4, Elevation) carry Schedule % Complete and Activity % Complete in two
+     columns whose heading cells are empty. If no % columns were matched by name, take the
+     last two neighbouring blank-headed columns whose every value lies between 0 and 100. */
+  if(m.pp === undefined || m.ap === undefined){
+    const hdr = rows[hi] || [], used = {};
+    for(const k in m) used[m[k]] = 1;
+    const width = Math.max(hdr.length, nx.length, ...rows.slice(hi + 1, hi + 20).map(r => (r || []).length));
+    const ok = [];
+    for(let c = 0; c < width; c++){
+      if(used[c] || txt(hdr[c]) || (hasNames && txt(nx[c]))) continue;
+      let n = 0, good = true;
+      for(let i = hi + 1; i < rows.length; i++){
+        const r = rows[i] || [];
+        if(!cellISO(g(r, 'pf'))) continue;                      // data rows only
+        const cell = r[c]; if(isBlank(cell)) continue;
+        const t = txt(cell).replace(/\s*%$/, '');
+        if(!/^-?\d+(\.\d+)?$/.test(t)){ good = false; break; }
+        const v = parseFloat(t); if(v < 0 || v > 100){ good = false; break; }
+        n++;
+      }
+      if(good && n) ok.push(c);
+    }
+    const L = ok.length;
+    if(L >= 2 && ok[L - 1] - ok[L - 2] === 1){
+      if(m.pp === undefined && !used[ok[L - 2]]) m.pp = ok[L - 2];
+      if(m.ap === undefined && !used[ok[L - 1]]) m.ap = ok[L - 1];
+    } else if(L && m.ap === undefined) m.ap = ok[L - 1];
+  }
   const isA = c => /\sA$/.test(txt(c));                       // P6 marks actual dates with "A"
   const out = [];
   for(let i = hi + 1; i < rows.length; i++){
