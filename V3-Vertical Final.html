@@ -2216,7 +2216,7 @@ function renderDelay(){
   const msg=(ic,h,p)=>{ bar.style.display='none'; host.innerHTML='<div class="card empty-state"><div class="es-icon" aria-hidden="true">'+ic+'</div><h3>'+h+'</h3><p>'+p+'</p></div>'; };
   if(!d) return msg('\uD83D\uDD17','No data connected for '+esc(DT_PROJ[daProject])+' yet','Connect this project\u2019s Google Sheet on the Database Sync tab.');
   if(d.acts===undefined) return msg('\u23F3','Activity list not loaded yet','This tab reads the <b>Activity Data</b> tab of the project\u2019s Google Sheet. It fills in once the sheet has loaded (press Refresh on the Database Sync tab if the dashboard is offline).');
-  if(!d.acts || !d.acts.length) return msg('\uD83D\uDCCB','No activities found in the Activity Data tab','Add a tab named <b>Activity Data</b> (the P6 activity export) with at least: Activity ID, Activity Name, Planned Start, Planned Finish, Start, Finish. Optional: Critical (or Total Float), Activity Status, Planned % / Activity % Complete, WBS, Reason.');
+  if(!d.acts || !d.acts.length) return msg('\uD83D\uDCCB','No activities found in the Activity Data tab','Add a tab named <b>Activity Data</b> (the P6 activity export) with at least: Activity ID, Activity Name, Planned Start / Finish (or BL Project Start / Finish), Start, Finish. Optional: Critical (or Total Float), Activity Status, Planned % / Activity % Complete, WBS, Reason.');
   bar.style.display='';
   const q=document.getElementById('da-q').value.trim().toLowerCase();
   const onlyCrit=document.getElementById('da-crit').checked, withDone=document.getElementById('da-done').checked;
@@ -3467,15 +3467,20 @@ async function loadActivitySheet(sheetId){
   return best;
 }
 /* P6 activity export rows -> [{id,name,wbs,ps,pf,s,f,sA,fA,crit,status,pp,ap,reason}] */
-const ACT_CODE = {id:'task_code', name:'task_name', wbs:'wbs_name', ps:'target_start_date', pf:'target_end_date',
-  s:'start_date', f:'end_date', as:'act_start_date', af:'act_end_date', crit:'driving_path_flag', tf:'total_float_hr_cnt',
+/* P6 field codes. A list means "any of these": V3 exports the baseline as target_*_date
+   (Planned Start / Finish) while V4 and Elevation export primary_base_*_date (BL Project Start / Finish). */
+const ACT_CODE = {id:'task_code', name:'task_name', wbs:'wbs_name',
+  ps:['target_start_date','primary_base_start_date','base_start_date','bl1_start_date'],
+  pf:['target_end_date','primary_base_end_date','base_end_date','bl1_end_date'],
+  s:'start_date', f:'end_date', as:'act_start_date', af:'act_end_date', crit:['driving_path_flag','critical_flag'], tf:'total_float_hr_cnt',
   status:'status_code', ap:'complete_pct'};
 const ACT_WANT = {
   id:     x => /^(activity id|activity_id|act id|id|task code)$/.test(x) || /activity id/.test(x),
   name:   x => /activity name|task name|^name$|^description$/.test(x),
   wbs:    x => /^wbs/.test(x) || /wbs (name|path|code)/.test(x),
-  ps:     x => /(planned|baseline|target|bl) start/.test(x) || /^planned date$/.test(x),
-  pf:     x => /(planned|baseline|target|bl) (finish|end)/.test(x),
+  // "Planned Start", "Baseline Start", "BL Project Start", "BL1 Start", "Target Start"
+  ps:     x => /(planned|baseline|target|bl\d?)( project)? start/.test(x) || /^planned date$/.test(x),
+  pf:     x => /(planned|baseline|target|bl\d?)( project)? (finish|end)/.test(x),
   s:      x => /^(start|start date|early start|forecast start|expected start)$/.test(x),
   f:      x => /^(finish|finish date|end date|end|early finish|forecast finish|expected finish)$/.test(x),
   as:     x => /actual start/.test(x),
@@ -3491,8 +3496,11 @@ const ACT_WANT = {
 function mapActHeader(row){
   const heads = (row || []).map(c => txt(c).toLowerCase().replace(/\(\*\)|\*/g, '').replace(/\s+/g, ' ').trim());
   const m = {}, used = {};
-  for(const k in ACT_CODE) for(let i = 0; i < heads.length; i++){
-    if(!used[i] && heads[i].split(' ').indexOf(ACT_CODE[k]) >= 0){ m[k] = i; used[i] = 1; break; }
+  for(const k in ACT_CODE){
+    const codes = [].concat(ACT_CODE[k]);
+    for(let i = 0; i < heads.length && m[k] === undefined; i++){
+      if(!used[i] && heads[i].split(' ').some(w => codes.indexOf(w) >= 0)){ m[k] = i; used[i] = 1; }
+    }
   }
   for(const k in ACT_WANT){ if(m[k] !== undefined) continue;
     for(let i = 0; i < heads.length; i++){ if(heads[i] && !used[i] && ACT_WANT[k](heads[i])){ m[k] = i; used[i] = 1; break; } }
