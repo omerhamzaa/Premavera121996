@@ -1077,6 +1077,24 @@ window.elevFixDates = function elevFixDates(dt){
   if(!o.src) o.src='fixed';
   return o;
 };
+/* ELEVATION ONLY: S-curve cleanup. Planned % is a running total so it can never go down (removes the dip/bend),
+   and the chart draws Elevation lines as smooth curves. Other projects untouched. */
+window.elevSmoothScurve = function elevSmoothScurve(sc){
+  if(!sc || !sc.labels || !sc.labels.length || !sc.planned) return sc;
+  if(sc.smooth) return sc;                       // already cleaned (apply() can run more than once)
+  const idx=[]; sc.planned.forEach((v,i)=>{ if(v!=null) idx.push(i); });
+  let a=idx.map(i=>sc.planned[i]), mx=-Infinity;
+  a=a.map(v=>{ mx=Math.max(mx,v); return mx; });  // never goes down
+  for(let k=0;k<3;k++){                            // 3 gentle passes: removes the kink / step, keeps first & last month
+    const b=a.slice();
+    for(let i=1;i<a.length-1;i++) b[i]=(a[i-1]+2*a[i]+a[i+1])/4;
+    a=b;
+  }
+  mx=-Infinity;
+  const planned=sc.planned.slice();
+  idx.forEach((i,k)=>{ mx=Math.max(mx,a[k]); planned[i]=Math.round(mx*100)/100; });
+  return Object.assign({}, sc, {planned:planned, plannedRaw:sc.planned.slice(), smooth:true});   // plannedRaw = sheet values, used for the numbers shown
+};
 window.dateDelay = function dateDelay(dt){
   if(!dt || !dt.plannedEnd || !dt.expectedEnd) return null;
   if(dt.fixedDelay!=null) return dt.fixedDelay;
@@ -1271,7 +1289,7 @@ function scOpenPop(btn){
       +'<div class="scf-list">'+S.labels.map((l,i)=>{
           const on = m!=='auto' && m.indexOf(l)>=0;
           return '<label><input type="checkbox" value="'+esc(l)+'"'+(on?' checked':'')+'><span class="scf-m">'+esc(l)+'</span>'
-            +'<b style="color:#3F6B70">'+fmt(S.planned[i])+'</b><b style="color:#A0522D">'+fmt(S.earned[i])+'</b></label>';
+            +'<b style="color:#3F6B70">'+fmt((S.plannedRaw||S.planned)[i])+'</b><b style="color:#A0522D">'+fmt(S.earned[i])+'</b></label>';
         }).join('')+'</div>'
       +'<div class="scf-foot">'+(m==='auto'?'Auto: the dashboard picks months so labels never overlap.':'Ticked months are shown on the axis with their Planned and Earned points.')+'</div>';
     const ls=pop.querySelector('.scf-list'); if(ls) ls.scrollTop=keepScroll;
@@ -1337,15 +1355,38 @@ function scurve(host, SS, dims){
   const x=i=> L + (W-L-R)*(n===1?0:i/(n-1));
   const y=v=> T + (H-T-B)*(1-v/100);
   const C={p:'#3F6B70', a:'#D6A93C', e:'#A0522D'};
+  // smooth monotone curve through the points (no overshoot, no dips) - used only when S.smooth is set (Elevation)
+  function smoothD(a){
+    const P=[]; a.forEach((v,i)=>{ if(v!=null) P.push([x(i),y(v)]); });
+    const m=P.length; if(m<3) return '';
+    const dx=[],sl=[],t=[];
+    for(let i=0;i<m-1;i++){ dx[i]=P[i+1][0]-P[i][0]; sl[i]=(P[i+1][1]-P[i][1])/dx[i]; }
+    t[0]=sl[0]; t[m-1]=sl[m-2];
+    for(let i=1;i<m-1;i++) t[i]=(sl[i-1]*sl[i]<=0)?0:(sl[i-1]+sl[i])/2;
+    for(let i=0;i<m-1;i++){
+      if(sl[i]===0){ t[i]=0; t[i+1]=0; continue; }
+      const aa=t[i]/sl[i], bb=t[i+1]/sl[i], q=aa*aa+bb*bb;
+      if(q>9){ const k=3/Math.sqrt(q); t[i]=k*aa*sl[i]; t[i+1]=k*bb*sl[i]; }
+    }
+    let d='M'+P[0][0].toFixed(1)+' '+P[0][1].toFixed(1);
+    for(let i=0;i<m-1;i++){
+      d+='C'+(P[i][0]+dx[i]/3).toFixed(1)+' '+(P[i][1]+t[i]*dx[i]/3).toFixed(1)+' '
+        +(P[i+1][0]-dx[i]/3).toFixed(1)+' '+(P[i+1][1]-t[i+1]*dx[i]/3).toFixed(1)+' '
+        +P[i+1][0].toFixed(1)+' '+P[i+1][1].toFixed(1);
+    }
+    return d;
+  }
   function path(a,color,w,dots){
     let d='',pts='';
     a.forEach((v,i)=>{ if(v==null)return; d+=(d?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1);
       if(dots && !shown(i)) return;
       pts+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="3.2" fill="'+color+'" stroke="#fff" stroke-width="1"/>';});
+    if(S.smooth) d=smoothD(a)||d;
     return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>'+pts;
   }
   // thin white outline under the Earned line so it stays visible where it runs on top of Planned
   function casing(a){ let d=''; a.forEach((v,i)=>{ if(v==null)return; d+=(d?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1); });
+    if(S.smooth) d=smoothD(a)||d;
     return d?'<path d="'+d+'" fill="none" stroke="#fff" stroke-width="4.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>':''; }
   // clean axis: only 0 / 50 / 100 %
   let g='';
@@ -1398,7 +1439,7 @@ function scurve(host, SS, dims){
   order.forEach(i=>{
     const p=S.planned[i], e=S.earned[i]; let cx=Math.min(Math.max(x(i), L+2), W-18);
     const items=[];
-    if(p!=null && want(sel.p,i)) items.push({v:p, c:C.p, t:fmtP(p)});
+    if(p!=null && want(sel.p,i)) items.push({v:p, c:C.p, t:fmtP(S.plannedRaw&&S.plannedRaw[i]!=null?S.plannedRaw[i]:p)});
     if(e!=null && want(sel.e,i)) items.push({v:e, c:C.e, t:fmtP(e)});
     if(!items.length) return;
     items.sort((a,b)=>b.v-a.v);                       // higher value first
@@ -1452,7 +1493,7 @@ function scurve(host, SS, dims){
     i=Math.max(0,Math.min(n-1,i));
     gl.setAttribute('x1',x(i)); gl.setAttribute('x2',x(i)); gl.setAttribute('visibility','visible');
     tip.innerHTML='<div class="h">'+esc(S.labels[i])+'</div>'
-      +row(C.p,'Planned %',S.planned[i])+row(C.a,'Actual %',S.actual[i])+row(C.e,'Earned %',S.earned[i]);
+      +row(C.p,'Planned %',(S.plannedRaw||S.planned)[i])+row(C.a,'Actual %',S.actual[i])+row(C.e,'Earned %',S.earned[i]);
     tip.hidden=false;
     const hr=host.getBoundingClientRect();
     const px=r.left-hr.left + x(i)*r.width/W, py=ev.clientY-hr.top;
@@ -2716,7 +2757,7 @@ function rpBuild(it, opt){
     let li=-1; (sc.earned||sc.actual||[]).forEach((v,i)=>{ if(v!=null) li=i; });
     if(li>=0){
       const f=a=>a&&a[li]!=null?Math.round(a[li])+'%':'\u2014';
-      s.addText('Latest ('+sc.labels[li]+'):  Planned '+f(sc.planned)+'   \u00B7   Actual '+f(sc.actual)+'   \u00B7   Earned '+f(sc.earned),
+      s.addText('Latest ('+sc.labels[li]+'):  Planned '+f(sc.plannedRaw||sc.planned)+'   \u00B7   Actual '+f(sc.actual)+'   \u00B7   Earned '+f(sc.earned),
         {x:sx+sw-5.2,y:ly+0.1,w:5.0,h:0.36,fontFace:RP_F,fontSize:10.5,color:RP.muted,align:'right',margin:0,isTextBox:true,valign:'middle'});
     }
     meta.push({kind:'sc',w:sw-1.0,n:sc.labels.length,fs:8});
@@ -3160,7 +3201,8 @@ window.__execList = execList;
 function refreshExec(){ if(window.__renderExec) window.__renderExec(execList()); }
 
 function apply(pid){
-  if(pid === 'elev' && PROJECTS[pid].data) PROJECTS[pid].data.dates = elevFixDates(PROJECTS[pid].data.dates);
+  if(pid === 'elev' && PROJECTS[pid].data) PROJECTS[pid].data.dates = elevFixDates(PROJECTS[pid].data.dates)
+  if(pid === 'elev' && PROJECTS[pid].data) PROJECTS[pid].data.scurve = elevSmoothScurve(PROJECTS[pid].data.scurve);
   if(pid === CUR) window.__applyLiveData(PROJECTS[pid].data);
   refreshExec();
 }
