@@ -1070,9 +1070,9 @@ body.has-zoom::before{content:"";position:fixed;inset:0;background:rgba(19,42,44
 window.elevFixDates = function elevFixDates(dt){
   const o=Object.assign({}, dt||{});
   if(!o.plannedEnd) o.plannedEnd='2027-08-26';
-  o.fixedDelay=26;                            // fixed delay: 26 days
+  o.fixedDelay=36;                            // fixed delay: 36 days
   const d=new Date(o.plannedEnd+'T00:00:00');
-  d.setDate(d.getDate()+o.fixedDelay);        // expected end = planned end + 26 days
+  d.setDate(d.getDate()+o.fixedDelay);        // expected end = planned end + 36 days
   o.expectedEnd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   if(!o.src) o.src='fixed';
   return o;
