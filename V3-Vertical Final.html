@@ -1546,7 +1546,8 @@ function render(){
   let bars='';
   groups.forEach(([name,members])=>{
     const t=all.filter(r=>keep(r)&&members.indexOf(D.depts[r[IDX.dept]])>=0).reduce((a,r)=>add(a,r),blank());
-    const pp=t.bcost?t.pcost/t.bcost*100:0, ap=t.bcost?t.ecost/t.bcost*100:0;
+    // a group cannot be more than 100% complete: values above the budget are shown as 100%
+    const pp=Math.min(t.bcost?t.pcost/t.bcost*100:0,100), ap=Math.min(t.bcost?t.ecost/t.bcost*100:0,100);
     bars+='<div class="barrow"><div class="barname">'+name+'</div><div class="bars">'
       +'<div class="bar"><span style="width:'+Math.min(pp,100)+'%;background:var(--teal)"></span><b style="left:'+Math.min(pp,88)+'%">'+pp.toFixed(1)+'%</b></div>'
       +'<div class="bar"><span style="width:'+Math.min(ap,100)+'%;background:var(--gold)"></span><b style="left:'+Math.min(ap,88)+'%">'+ap.toFixed(1)+'%</b></div>'
@@ -2711,7 +2712,7 @@ function rpBuild(it, opt){
   // progress completion
   const groups=rpGroups(d);
   const gT=groups.map(([n,mem])=>{ const t=d.rows.filter(r=>rpKeep(d,r)&&mem.indexOf(d.depts[r[IDX.dept]])>=0).reduce((a,r)=>add(a,r),blank());
-    return {n:n,p:t.bcost?t.pcost/t.bcost*100:0,a:t.bcost?t.ecost/t.bcost*100:0}; });
+    return {n:n,p:Math.min(t.bcost?t.pcost/t.bcost*100:0,100),a:Math.min(t.bcost?t.ecost/t.bcost*100:0,100)}; });
   const lw=5.0, pcH=(bottom-ly)*0.56;
   card(s,M,ly,lw,pcH,'Progress Completion');
   const gr=gT;
