@@ -3501,8 +3501,8 @@ async function loadActivitySheet(sheetId, needEv){
       const dates = parseActivityDates(rows), acts = parseActivities(rows);
       const cand = {dates: dates, acts: acts};
       if(!best || (acts && (!best.acts || acts.length > best.acts.length)) || (!best.dates && dates)) best = {dates: best && best.dates || dates, acts: (acts && (!best || !best.acts || acts.length > best.acts.length)) ? acts : (best && best.acts)};
-      if(needEv && acts && acts.hasEv && best.acts && !best.acts.hasEv && acts.length >= best.acts.length) best.acts = acts;
-      if(best.acts && best.acts.length && best.dates && (!needEv || best.acts.hasEv)) break;
+      if(needEv && acts && best.acts && acts !== best.acts && acts.length >= best.acts.length && (acts.hasEv ? 1 : 0) + (acts.hasPv ? 1 : 0) > (best.acts.hasEv ? 1 : 0) + (best.acts.hasPv ? 1 : 0)) best.acts = acts;
+      if(best.acts && best.acts.length && best.dates && (!needEv || (best.acts.hasEv && best.acts.hasPv))) break;
     } catch(e){ /* tab missing - fine */ }
   }
   return best;
@@ -3516,6 +3516,7 @@ const ACT_CODE = {id:'task_code', name:'task_name', wbs:'wbs_name',
   s:'start_date', f:'end_date', as:'act_start_date', af:'act_end_date', crit:['driving_path_flag','critical_flag'], tf:'total_float_hr_cnt',
   status:'status_code',
   ev:'bcwp',                                                                           // (*)Earned Value Cost
+  pv:'bcws',                                                                           // (*)Planned Value Cost
   pp:['sched_complete_pct','schedule_pct_complete'],                                   // (*)Schedule % Complete(%)
   ap:['perfm_complete_pct','phys_complete_pct','act_pct_complete','complete_pct']};    // (*)Performance % Complete(%)
 const ACT_WANT = {
@@ -3535,6 +3536,7 @@ const ACT_WANT = {
   pp:     x => /(planned|sched|schedule|scheduled|baseline).*(%|complete|progress|pct)/.test(x),
   ap:     x => /(activity|physical|phys|actual|performance|perfm|perf|duration).*(%|complete|progress|pct)/.test(x) || /^(% complete|progress)$/.test(x),
   ev:     x => /(earned|bcwp)/.test(x) && /(cost|value)/.test(x) && !/(unit|qty|quantit)/.test(x),
+  pv:     x => /(planned value|bcws)/.test(x) && /(cost|value)/.test(x) && !/(unit|qty|quantit)/.test(x),
   reason: x => /reason|remark|comment|note|cause/.test(x),
   dd:     x => /data date|last_recalc_date|status date/.test(x)
 };
@@ -3601,6 +3603,7 @@ function parseActivities(rows){
   const isA = c => /\sA$/.test(txt(c));                       // P6 marks actual dates with "A"
   const out = [];
   out.hasEv = m.ev !== undefined;                             // Earned Value Cost column present
+  out.hasPv = m.pv !== undefined;                             // Planned Value Cost column present
   for(let i = hi + 1; i < rows.length; i++){
     const r = rows[i] || [];
     const id = txt(g(r, 'id')); if(!id) continue;
@@ -3619,7 +3622,8 @@ function parseActivities(rows){
       pp: m.pp === undefined ? null : pctVal(g(r, 'pp')),
       ap: m.ap === undefined ? null : pctVal(g(r, 'ap')),
       reason: txt(g(r, 'reason')),
-      ev: (m.ev === undefined || isBlank(g(r, 'ev'))) ? null : num(g(r, 'ev'))
+      ev: (m.ev === undefined || isBlank(g(r, 'ev'))) ? null : num(g(r, 'ev')),
+      pv: (m.pv === undefined || isBlank(g(r, 'pv'))) ? null : num(g(r, 'pv'))
     });
     if(!out.dataDate && m.dd !== undefined){ const v = cellISO(g(r, 'dd')); if(v) out.dataDate = v; }
   }
@@ -3925,42 +3929,53 @@ function fillPlanned(sc, base){
   return Object.assign({}, sc, {planned: planned});
 }
 
-/* ---------- Earned value from the Activity Data tab (Elevation) ----------
-   Each activity's Earned Value Cost (bcwp) replaces the earned value of its resource rows.
-   It is shared between that activity's rows in proportion to their budgeted cost, so the
-   department / major item / floor filters and tables keep working and their totals add up
-   to SUM('Activity Data'[bcwp]). An activity that has earned value but no resource row is
-   added as one extra row. Resource rows whose activity is not in the tab keep their own value. */
+/* ---------- Earned + planned value from the Activity Data tab (Elevation) ----------
+   Each activity's Earned Value Cost (bcwp) and Planned Value Cost (bcws) replace the earned /
+   planned value of its resource rows. They are shared between that activity's rows in
+   proportion to their budgeted cost, so the department / major item / floor filters and
+   tables keep working and their totals add up to SUM('Activity Data'[bcwp]) / SUM([bcws]).
+   An activity that has a value but no resource row is added as one extra row. Resource rows
+   whose activity is not in the tab keep their own value. Budget and actual cost are untouched. */
 const EV_FROM_ACTIVITY = {elev: true};
 const EV_ORPHAN_DEPT = 'Activity cost (no resource)';
 function applyActivityEarned(data){
   const acts = data.acts;
   if(!acts || !acts.length) return {ok: false, why: 'Activity Data tab not loaded'};
-  if(!acts.hasEv) return {ok: false, why: 'no Earned Value Cost (bcwp) column in Activity Data'};
+  if(!acts.hasEv && !acts.hasPv) return {ok: false, why: 'no Earned / Planned Value Cost (bcwp, bcws) columns in Activity Data'};
   const key = v => String(v === null || v === undefined ? '' : v).trim().toUpperCase();
   const byAct = new Map();
   data.rows.forEach(r => { const k = key(r[13]); if(!k) return; if(!byAct.has(k)) byAct.set(k, []); byAct.get(k).push(r); });
   if(!byAct.size) return {ok: false, why: 'no Activity ID (task_id) column in Progress Data'};
-  const ev = new Map(), nm = new Map();
-  acts.forEach(a => { if(a.ev === null || a.ev === undefined) return; const k = key(a.id); if(!k) return;
-    ev.set(k, (ev.get(k) || 0) + a.ev); if(!nm.has(k)) nm.set(k, a.name || a.id); });
-  if(!ev.size) return {ok: false, why: 'Earned Value Cost column in Activity Data is empty'};
   const at = (list, v) => { let i = list.indexOf(v); if(i < 0){ i = list.length; list.push(v); } return i; };
-  let orphans = 0;
-  ev.forEach((val, k) => {
-    const rs = byAct.get(k);
-    if(rs){
-      const B = rs.reduce((t, r) => t + r[5], 0), E = rs.reduce((t, r) => t + r[7], 0);
-      rs.forEach(r => { r[7] = B > 0 ? val * r[5] / B : E > 0 ? val * r[7] / E : val / rs.length; });
-    } else if(val){
-      orphans++;
-      data.rows.push([at(data.depts, EV_ORPHAN_DEPT), at(data.majs, 'Activity without resource'), at(data.flrs, '(blank)'),
-        at(data.itms, nm.get(k) || k), 0, 0, 0, val, 0, 0, 0, 0, 0, k]);
-    }
+  const orphan = new Map(), seen = new Set(), done = [];
+  // field on the activity -> column of the resource row (7 = earned cost, 6 = planned cost)
+  [['ev', 7, acts.hasEv, 'earned'], ['pv', 6, acts.hasPv, 'planned']].forEach(([f, col, has, label]) => {
+    if(!has) return;
+    const val = new Map(), nm = new Map();
+    acts.forEach(a => { if(a[f] === null || a[f] === undefined) return; const k = key(a.id); if(!k) return;
+      val.set(k, (val.get(k) || 0) + a[f]); if(!nm.has(k)) nm.set(k, a.name || a.id); });
+    if(!val.size) return;
+    done.push(label);
+    val.forEach((v, k) => {
+      seen.add(k);
+      const rs = byAct.get(k);
+      if(rs && rs.indexOf(orphan.get(k)) < 0){
+        const B = rs.reduce((t, r) => t + r[5], 0), E = rs.reduce((t, r) => t + r[col], 0);
+        rs.forEach(r => { r[col] = B > 0 ? v * r[5] / B : E > 0 ? v * r[col] / E : v / rs.length; });
+      } else if(v || orphan.has(k)){
+        if(!orphan.has(k)){
+          const row = [at(data.depts, EV_ORPHAN_DEPT), at(data.majs, 'Activity without resource'), at(data.flrs, '(blank)'),
+            at(data.itms, nm.get(k) || k), 0, 0, 0, 0, 0, 0, 0, 0, 0, k];
+          orphan.set(k, row); data.rows.push(row);
+        }
+        orphan.get(k)[col] = v;
+      }
+    });
   });
+  if(!done.length) return {ok: false, why: 'Earned / Planned Value Cost columns in Activity Data are empty'};
   let kept = 0;
-  byAct.forEach((rs, k) => { if(!ev.has(k)) kept += rs.length; });
-  return {ok: true, acts: ev.size, orphans: orphans, kept: kept};
+  byAct.forEach((rs, k) => { if(!seen.has(k)) kept += rs.length; });
+  return {ok: true, acts: seen.size, orphans: orphan.size, kept: kept, what: done.join(' + ')};
 }
 
 /* ---------- run ---------- */
@@ -4010,8 +4025,8 @@ async function load(pid, opts){
       if(EV_FROM_ACTIVITY[pid]){
         const R = applyActivityEarned(P.data);
         setBox(pid, 'd-pr', 'Loaded \u2014 ' + pr.rows.length + ' rows \u00b7 ' + (R.ok
-          ? 'earned value from Activity Data (' + R.acts + ' activities' + (R.orphans ? ', ' + R.orphans + ' without resources' : '') + (R.kept ? ', ' + R.kept + ' resource rows not in Activity Data' : '') + ')'
-          : 'earned value still from Progress Data \u2014 ' + R.why), R.ok ? 'ok' : 'bad');
+          ? R.what + ' value from Activity Data (' + R.acts + ' activities' + (R.orphans ? ', ' + R.orphans + ' without resources' : '') + (R.kept ? ', ' + R.kept + ' resource rows not in Activity Data' : '') + ')'
+          : 'earned / planned value still from Progress Data \u2014 ' + R.why), R.ok ? 'ok' : 'bad');
       }
       let dt = act || (sc && sc.dates) || (P.builtin ? BASE.dates : null) || null;
       if(!dt){
